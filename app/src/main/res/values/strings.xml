@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">ProjetoCM</string>
+    <string name="app_name">RunRoute</string>
+    <string name="history">Recent Activities</string>
 </resources>
