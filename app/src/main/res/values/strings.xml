@@ -1,4 +1,23 @@
 <resources>
     <string name="app_name">RunRoute</string>
     <string name="history">Recent Activities</string>
+    <string name="new_run">New Run</string>
+    <string name="one_way">One Way</string>
+    <string name="time_label">Time</string>
+    <string name="hours">h</string>
+    <string name="minutes">min</string>
+    <string name="seconds">sec</string>
+    <string name="distance">Distance:</string>
+    <string name="km">km</string>
+    <string name="start_running">Start Running</string>
+    <string name="save">Save</string>
+    <string name="top_speed">Top Speed:</string>
+    <string name="km_per_hour">km/h</string>
+    <string name="steps_taken">Steps taken:</string>
+    <string name="average_speed">Average speed:</string>
+    <string name="calories_burned">Calories burned:</string>
+    <string name="cal">cal</string>
+    <string name="pause">Pause</string>
+    <string name="finish">Finish</string>
+    <string name="take_photo">Take photo</string>
 </resources>
