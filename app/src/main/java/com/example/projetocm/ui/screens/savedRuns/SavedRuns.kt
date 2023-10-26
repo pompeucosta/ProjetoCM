@@ -9,13 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,40 +27,15 @@ import com.example.projetocm.data.RunPresets
 import com.example.projetocm.ui.theme.ProjetoCMTheme
 
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TopAppBar(modifier: Modifier = Modifier) {
-    CenterAlignedTopAppBar(
-        title = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text= stringResource(id = R.string.new_run),
-                    style= MaterialTheme.typography.displayLarge
-                )
-            }
-        },
-        modifier = modifier
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SavedRuns(modifier: Modifier = Modifier) {
-    Scaffold(
-        topBar = {
-            TopAppBar()
-        }
-    ) {
-        LazyColumn(contentPadding = it) {
-            items(RunPresets) {preset ->
-                Preset(
-                    preset = preset,
-                    modifier= Modifier
-                        .padding(dimensionResource(id = R.dimen.padding_medium))
-                )
-            }
+    LazyColumn(modifier = modifier) {
+        items(RunPresets) {preset ->
+            Preset(
+                preset = preset,
+                modifier= Modifier
+                    .padding(dimensionResource(id = R.dimen.padding_medium))
+            )
         }
     }
 }

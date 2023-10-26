@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.example.projetocm"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.projetocm"
@@ -69,5 +69,9 @@ dependencies {
     //google maps
     implementation("com.google.maps.android:maps-compose:2.15.0")
     implementation("com.google.android.gms:play-services-maps:18.1.0")
+
+    val nav_version = "2.7.4"
+    implementation("androidx.navigation:navigation-compose:$nav_version")
+
 
 }
