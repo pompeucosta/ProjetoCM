@@ -42,8 +42,8 @@ sealed class Screen(
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 ) {
-    object History: Screen("History","history",Icons.Filled.Home,Icons.Outlined.Home)
-    object PresetRuns: Screen("Runs","presetRuns",Icons.Filled.List,Icons.Outlined.List)
+    data object History: Screen("History","history",Icons.Filled.Home,Icons.Outlined.Home)
+    data object PresetRuns: Screen("Runs","presetRuns",Icons.Filled.List,Icons.Outlined.List)
 }
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -60,7 +60,8 @@ class MainActivity : ComponentActivity() {
                 }
 
                 var topBarTitle by rememberSaveable {
-                    mutableStateOf("")
+                    //mudar o default para o home title
+                    mutableStateOf(Screen.History.title)
                 }
 
                 //https://developer.android.com/jetpack/compose/navigation#bottom-nav

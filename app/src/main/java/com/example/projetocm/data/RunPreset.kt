@@ -1,14 +1,19 @@
 package com.example.projetocm.data
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
+@Entity(tableName = "RunPresets")
 data class RunPreset (
-    val time: Time,
+    val seconds: Int,
     val km: Int,
-    val twoWay: Boolean
+    val twoWay: Boolean,
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0
 )
 
 val RunPresets = listOf<RunPreset>(
-    RunPreset(Time(0,10,33),15,false),
-    RunPreset(Time(1,30,55),50,true),
-    RunPreset(Time(0,50,20),30,true)
+    RunPreset(350,15,false),
+    RunPreset(5455,50,true),
+    RunPreset(3020,30,true)
 )

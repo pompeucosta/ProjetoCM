@@ -1,10 +1,9 @@
 package com.example.projetocm.ui.screens.savedRuns
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.text.KeyboardOptions
@@ -17,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -24,15 +24,24 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projetocm.R
+import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.theme.ProjetoCMTheme
 import com.example.projetocm.ui.utils.Picker
 import com.example.projetocm.ui.utils.rememberPickerState
+import kotlinx.coroutines.launch
 
 @Composable
-fun CreateRun(modifier: Modifier = Modifier) {
+fun CreateRun(
+    modifier: Modifier = Modifier,
+    viewModel: CreateRunViewModel = viewModel(factory= AppViewModelProvider.Factory)
+) {
+    val coroutineScope = rememberCoroutineScope()
+
     Column(
-        modifier = modifier
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Text(
             text= stringResource(id = R.string.time_label),
@@ -41,39 +50,23 @@ fun CreateRun(modifier: Modifier = Modifier) {
                 .align(Alignment.CenterHorizontally)
         )
 
-        Spacer(
-            modifier = Modifier
-                .height(20.dp)
-        )
-
         TimePicker(
             modifier= Modifier
                 .fillMaxWidth()
         )
 
-        Spacer(
-            modifier = Modifier
-                .height(40.dp)
-        )
-
         Distance(
+            presetDetails = viewModel.presetUIState.presetDetails,
+            onValueChange = viewModel::updateUIState,
             modifier= Modifier
                 .fillMaxWidth()
-        )
-
-        Spacer(
-            modifier = Modifier
-                .height(40.dp)
         )
 
         OneWay(
+            presetDetails = viewModel.presetUIState.presetDetails,
+            onCheckedChange = viewModel::updateUIState,
             modifier= Modifier
                 .fillMaxWidth()
-        )
-
-        Spacer(
-            modifier = Modifier
-                .height(40.dp)
         )
 
         Row(
@@ -81,11 +74,15 @@ fun CreateRun(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .weight(weight= 1f,fill = true)
         ) {
-            Column(
-
-            ) {
+            Column{
                 Button(
-                    onClick = {},
+                    onClick = {
+                        coroutineScope.launch {
+                            viewModel.savePreset()
+                            //voltar para a pagina dos presets
+                        }
+                    },
+                    enabled = viewModel.presetUIState.isEntryValid,
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
@@ -95,7 +92,13 @@ fun CreateRun(modifier: Modifier = Modifier) {
                 }
 
                 Button(
-                    onClick = {},
+                    onClick = {
+                              coroutineScope.launch {
+                                  viewModel.savePreset()
+                                  //comecar a sessao
+                              }
+                    },
+                    enabled = viewModel.presetUIState.isEntryValid,
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
@@ -160,7 +163,11 @@ fun TimePicker(modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Distance(modifier: Modifier = Modifier) {
+fun Distance(
+    presetDetails: RunPresetDetails,
+    modifier: Modifier = Modifier,
+    onValueChange: (RunPresetDetails) -> Unit = {}
+) {
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
@@ -186,7 +193,7 @@ fun Distance(modifier: Modifier = Modifier) {
             ) {
                 TextField(
                     value="0",
-                    onValueChange = {},
+                    onValueChange = {onValueChange(presetDetails.copy(km= it))},
                     keyboardOptions = KeyboardOptions.Default.copy(
                         keyboardType = KeyboardType.Number),
                     modifier= Modifier
@@ -204,7 +211,11 @@ fun Distance(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun OneWay(modifier: Modifier= Modifier) {
+fun OneWay(
+    presetDetails: RunPresetDetails,
+    modifier: Modifier= Modifier,
+    onCheckedChange: (RunPresetDetails) -> Unit
+) {
     Row(
         modifier= modifier,
         verticalAlignment = Alignment.CenterVertically
@@ -215,7 +226,7 @@ fun OneWay(modifier: Modifier= Modifier) {
         )
         Switch(
             checked = false,
-            onCheckedChange= {},
+            onCheckedChange= {onCheckedChange(presetDetails.copy(twoWay = it))},
             modifier= Modifier
                 .fillMaxWidth()
                 .wrapContentWidth(align = Alignment.End)

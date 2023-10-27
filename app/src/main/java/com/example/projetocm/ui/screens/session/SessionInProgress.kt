@@ -247,9 +247,7 @@ fun InfoRow(
 @Composable
 fun SessionInProgressPreview(){
     ProjetoCMTheme {
-        Scaffold(
-
-        ) {
+        Scaffold {
             SessionInProgress(modifier = Modifier.padding(it))
         }
     }
@@ -260,9 +258,7 @@ fun SessionInProgressPreview(){
 @Composable
 fun SessionInProgressPreviewDark(){
     ProjetoCMTheme(darkTheme = true) {
-        Scaffold(
-
-        ) {
+        Scaffold{
             SessionInProgress(modifier = Modifier.padding(it))
         }
     }

@@ -1,5 +1,6 @@
 package com.example.projetocm.ui.screens.savedRuns
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,33 +16,69 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projetocm.R
 import com.example.projetocm.data.RunPreset
 import com.example.projetocm.data.RunPresets
+import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.theme.ProjetoCMTheme
 
 
 @Composable
-fun SavedRuns(modifier: Modifier = Modifier) {
+fun SavedRuns(
+    modifier: Modifier = Modifier,
+    viewModel: SavedRunsViewModel = viewModel(factory= AppViewModelProvider.Factory)
+) {
+    val savedRunsUIState by viewModel.savedRunsUIState.collectAsState()
+    val presetList = savedRunsUIState.presetList
+    if(presetList.isEmpty()) {
+        //mostrar uma mensagem a dizer que nao tem nada
+        //ou nao mostrar nada simplesmente
+    }
+    else {
+        PresetList(
+            list = presetList,
+            onPresetClick = {
+                //abrir a pagina CreateRun com os detalhes do preset
+
+            },
+            modifier= modifier)
+    }
+}
+
+@Composable
+fun PresetList(
+    list: List<RunPreset>,
+    modifier: Modifier = Modifier,
+    onPresetClick: (RunPreset) -> Unit = {}
+) {
     LazyColumn(modifier = modifier) {
-        items(RunPresets) {preset ->
+        items(items= list, key = {it.id}) { preset ->
             Preset(
-                preset = preset,
-                modifier= Modifier
+                preset = preset.toRunPresetDetails(),
+                modifier = Modifier
                     .padding(dimensionResource(id = R.dimen.padding_medium))
+                    .clickable {
+                        onPresetClick(preset)
+                    }
             )
         }
     }
 }
 
 @Composable
-fun Preset(preset: RunPreset,modifier: Modifier = Modifier) {
+fun Preset(
+    preset: RunPresetDetails,
+    modifier: Modifier = Modifier
+) {
     ElevatedCard(
         elevation = CardDefaults.cardElevation(
             defaultElevation = 6.dp
@@ -65,7 +102,7 @@ fun Preset(preset: RunPreset,modifier: Modifier = Modifier) {
                         .weight(1f)
                 ) {
                     Text(
-                        text= "${preset.time.hours}:${preset.time.minutes}:${preset.time.seconds}",
+                        text= "${preset.hours}:${preset.minutes}:${preset.seconds}",
                         style= MaterialTheme.typography.displayMedium
                     )
                 }
@@ -110,7 +147,7 @@ fun Preset(preset: RunPreset,modifier: Modifier = Modifier) {
 @Composable
 fun SavedRunsPreview() {
     ProjetoCMTheme(darkTheme = false) {
-        SavedRuns()
+        PresetList(list= RunPresets)
     }
 }
 
@@ -118,6 +155,6 @@ fun SavedRunsPreview() {
 @Composable
 fun SavedRunsPreviewDark() {
     ProjetoCMTheme(darkTheme = true) {
-        SavedRuns()
+        PresetList(list= RunPresets)
     }
 }
