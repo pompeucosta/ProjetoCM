@@ -31,7 +31,7 @@ import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 
 @Composable
-fun SessionInProgress(modifier: Modifier = Modifier) {
+fun SessionInProgress(onNavigateToCamera: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
@@ -111,7 +111,7 @@ fun SessionInProgress(modifier: Modifier = Modifier) {
             )
 
             Button(
-                onClick = {},
+                onClick = onNavigateToCamera,
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
@@ -248,7 +248,7 @@ fun InfoRow(
 fun SessionInProgressPreview(){
     ProjetoCMTheme {
         Scaffold {
-            SessionInProgress(modifier = Modifier.padding(it))
+            SessionInProgress(onNavigateToCamera = {},modifier = Modifier.padding(it))
         }
     }
 }
@@ -259,7 +259,7 @@ fun SessionInProgressPreview(){
 fun SessionInProgressPreviewDark(){
     ProjetoCMTheme(darkTheme = true) {
         Scaffold{
-            SessionInProgress(modifier = Modifier.padding(it))
+            SessionInProgress(onNavigateToCamera = {},modifier = Modifier.padding(it))
         }
     }
 }

@@ -81,4 +81,34 @@ dependencies {
     implementation("androidx.room:room-runtime:2.6.0")
     ksp("androidx.room:room-compiler:2.6.0")
     annotationProcessor("androidx.room:room-compiler:2.6.0")
+
+    //Camera
+    implementation("androidx.camera:camera-camera2:1.3.0-rc01")
+    implementation("androidx.camera:camera-lifecycle:1.3.0-rc01")
+    implementation("androidx.camera:camera-view:1.3.0-rc01")
+    implementation("androidx.camera:camera-extensions:1.3.0-rc01")
+
+    // Accompanist //
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+
+    //Icons and materials
+    implementation("androidx.compose.material:material-icons-extended:1.5.3")
+    implementation("androidx.compose.material:material:1.5.1")
+
+    ////DEPENDENCY INJECTION////
+    ////KOIN BASE////
+    implementation("io.insert-koin:koin-core:3.4.2")
+    implementation("io.insert-koin:koin-android:3.4.2")
+    implementation("io.insert-koin:koin-androidx-compose:3.4.6")
+
+    ////KOIN KSP////
+    implementation("io.insert-koin:koin-annotations:1.2.2")
+    ksp("io.insert-koin:koin-ksp-compiler:1.2.2")
+
+    ///// LIFECYCLE /////
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.2")
+    //implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2")
 }

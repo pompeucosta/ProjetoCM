@@ -29,11 +29,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.projetocm.ui.screens.history.History
 import com.example.projetocm.ui.screens.savedRuns.SavedRuns
+import com.example.projetocm.ui.screens.session.SessionInProgress
+import com.example.projetocm.ui.screens.camera.MainCameraScreen
 import com.example.projetocm.ui.theme.ProjetoCMTheme
 
 sealed class Screen(
@@ -44,6 +47,8 @@ sealed class Screen(
 ) {
     data object History: Screen("History","history",Icons.Filled.Home,Icons.Outlined.Home)
     data object PresetRuns: Screen("Runs","presetRuns",Icons.Filled.List,Icons.Outlined.List)
+    data object RunInProgress: Screen("Run In Progress","runInProgress",Icons.Filled.List,Icons.Outlined.List)
+    data object CameraPreview: Screen("Run In Progress","cameraPreview",Icons.Filled.List,Icons.Outlined.List)
 }
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -53,7 +58,8 @@ class MainActivity : ComponentActivity() {
             ProjetoCMTheme {
                 val items = listOf(
                     Screen.History,
-                    Screen.PresetRuns
+                    Screen.PresetRuns,
+                    Screen.RunInProgress
                 )
                 var selectedItemIndex by rememberSaveable {
                     mutableIntStateOf(0)
@@ -103,6 +109,8 @@ class MainActivity : ComponentActivity() {
                         NavHost(navController = navController, startDestination = Screen.History.route, Modifier.padding(it)) {
                             composable(Screen.History.route) { History()}
                             composable(Screen.PresetRuns.route) { SavedRuns()}
+                            composable(Screen.RunInProgress.route) { SessionInProgress(onNavigateToCamera = { navController.navigate(Screen.CameraPreview.route) }) }
+                            composable(Screen.CameraPreview.route) { MainCameraScreen() }
                         }
                     }
                 }
