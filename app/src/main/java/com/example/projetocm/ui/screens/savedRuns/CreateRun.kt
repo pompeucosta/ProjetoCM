@@ -1,5 +1,6 @@
 package com.example.projetocm.ui.screens.savedRuns
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,8 +20,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -29,7 +32,6 @@ import com.example.projetocm.R
 import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.theme.ProjetoCMTheme
 import com.example.projetocm.ui.utils.Picker
-import com.example.projetocm.ui.utils.rememberPickerState
 import kotlinx.coroutines.launch
 
 @Composable
@@ -40,7 +42,7 @@ fun CreateRun(
     val coroutineScope = rememberCoroutineScope()
 
     Column(
-        modifier = modifier,
+        modifier = modifier.padding(dimensionResource(id = R.dimen.padding_medium)),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Text(
@@ -52,7 +54,9 @@ fun CreateRun(
 
         TimePicker(
             modifier= Modifier
-                .fillMaxWidth()
+                .fillMaxWidth(),
+            presetDetails = viewModel.presetUIState.presetDetails,
+            onValueChange = viewModel::updateUIState
         )
 
         Distance(
@@ -113,50 +117,49 @@ fun CreateRun(
 }
 
 @Composable
-fun TimePicker(modifier: Modifier = Modifier) {
+fun TimePicker(
+    modifier: Modifier = Modifier,
+    presetDetails: RunPresetDetails,
+    onValueChange: (RunPresetDetails) -> Unit
+) {
     val hours = remember { (0..23).map{it.toString()}}
-    val hoursPickerState = rememberPickerState()
 
     val minutes = remember {(0..59).map{it.toString()}}
-    val minutesPickerState = rememberPickerState()
 
     val seconds = remember{(0..59).map{it.toString()}}
-    val secondsPickerState = rememberPickerState()
 
     Row(
-        modifier = modifier
+        modifier = modifier,
+        horizontalArrangement = Arrangement.Center
     ) {
         Picker(
             items= hours,
-            state= hoursPickerState,
             visibleItemsCount = 3,
+            onItemSelectedChange = { onValueChange(presetDetails.copy(hours= it)) },
             companionText= stringResource(id = R.string.hours),
             companionTextStyle= MaterialTheme.typography.labelSmall,
             modifier = Modifier
                 .weight(1f)
-                .padding(dimensionResource(id = R.dimen.padding_small))
         )
 
         Picker(
             items= minutes,
-            state= minutesPickerState,
             visibleItemsCount = 3,
+            onItemSelectedChange = {onValueChange(presetDetails.copy(minutes= it))},
             companionText= stringResource(id = R.string.minutes),
             companionTextStyle= MaterialTheme.typography.labelSmall,
             modifier = Modifier
                 .weight(1f)
-                .padding(dimensionResource(id = R.dimen.padding_small))
         )
 
         Picker(
             items= seconds,
-            state= secondsPickerState,
             visibleItemsCount = 3,
+            onItemSelectedChange = {onValueChange(presetDetails.copy(seconds= it))},
             companionText= stringResource(id = R.string.seconds),
             companionTextStyle= MaterialTheme.typography.labelSmall,
             modifier = Modifier
                 .weight(1f)
-                .padding(dimensionResource(id = R.dimen.padding_small))
         )
     }
 }
@@ -195,7 +198,7 @@ fun Distance(
                     value=presetDetails.km,
                     onValueChange = {onValueChange(presetDetails.copy(km= it))},
                     keyboardOptions = KeyboardOptions.Default.copy(
-                        keyboardType = KeyboardType.Number),
+                        keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
                     modifier= Modifier
                         .padding(dimensionResource(id = R.dimen.padding_small))
                         .weight(0.75f)

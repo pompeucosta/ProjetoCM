@@ -52,6 +52,7 @@ class CreateRunViewModel(private val presetsRepository: RunPresetsRepository): V
     }
 
     fun updateUIState(presetDetails: RunPresetDetails) {
+        Log.d("t",presetDetails.km)
         presetUIState = RunPresetUIState(presetDetails= presetDetails, isEntryValid = validateInput(presetDetails))
     }
 

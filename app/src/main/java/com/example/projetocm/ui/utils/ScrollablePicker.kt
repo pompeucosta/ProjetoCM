@@ -2,7 +2,9 @@ package com.example.projetocm.ui.utils
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -53,9 +56,9 @@ private fun pixelsToDp(pixels: Int) = with(LocalDensity.current) { pixels.toDp()
 @Composable
 fun Picker(
     items: List<String>,
+    modifier: Modifier = Modifier,
     state: PickerState = rememberPickerState(),
     onItemSelectedChange: (String) -> Unit = {},
-    modifier: Modifier = Modifier,
     startIndex: Int = 0,
     visibleItemsCount: Int = 3,
     textModifier: Modifier = Modifier,
@@ -75,6 +78,10 @@ fun Picker(
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = listStartIndex)
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
 
+    //very required!!!!
+    //caso contrario as variaveis dentro da funcao nao vao estar sincronizadas com as do caller
+    val itemChanged by rememberUpdatedState(newValue = onItemSelectedChange)
+
     val itemHeightPixels = remember { mutableStateOf(0) }
     val itemHeightDp = pixelsToDp(itemHeightPixels.value)
 
@@ -92,12 +99,13 @@ fun Picker(
             .distinctUntilChanged()
             .collect { item ->
                 state.selectedItem = item
-                onItemSelectedChange(item)
+                itemChanged(item)
             }
     }
 
         Row(
-            modifier= modifier
+            modifier= modifier,
+            horizontalArrangement = Arrangement.Center
         ) {
 
             LazyColumn(
@@ -105,7 +113,6 @@ fun Picker(
                 flingBehavior = flingBehavior,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
-                    .width(30.dp)
                     .height(itemHeightDp * visibleItemsCount)
                     .fadingEdge(fadingEdgeGradient)
             ) {
