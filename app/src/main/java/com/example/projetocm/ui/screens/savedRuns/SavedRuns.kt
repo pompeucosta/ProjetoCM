@@ -10,9 +10,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,26 +38,37 @@ import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.theme.ProjetoCMTheme
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SavedRuns(
     modifier: Modifier = Modifier,
-    viewModel: SavedRunsViewModel = viewModel(factory= AppViewModelProvider.Factory)
+    viewModel: SavedRunsViewModel = viewModel(factory= AppViewModelProvider.Factory),
+    onAddBtnClick: () -> Unit = {}
 ) {
-    val savedRunsUIState by viewModel.savedRunsUIState.collectAsState()
-    val presetList = savedRunsUIState.presetList
-    if(presetList.isEmpty()) {
-        //mostrar uma mensagem a dizer que nao tem nada
-        //ou nao mostrar nada simplesmente
-    }
-    else {
-        PresetList(
-            list = presetList,
-            onPresetClick = {
-                //abrir a pagina CreateRun com os detalhes do preset
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = onAddBtnClick) {
+                Icon(Icons.Default.Add,contentDescription= "Add")
+            }
+        },
+    ) {innerPadding ->
+        val savedRunsUIState by viewModel.savedRunsUIState.collectAsState()
+        val presetList = savedRunsUIState.presetList
+        if(presetList.isEmpty()) {
+            //mostrar uma mensagem a dizer que nao tem nada
+            //ou nao mostrar nada simplesmente
+        }
+        else {
+            PresetList(
+                list = presetList,
+                onPresetClick = {
+                    //abrir a pagina CreateRun com os detalhes do preset
 
-            },
-            modifier= modifier)
+                },
+                modifier= modifier.padding(innerPadding))
+        }
     }
+
 }
 
 @Composable

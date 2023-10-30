@@ -1,13 +1,13 @@
 package com.example.projetocm.ui.screens.session
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -17,25 +17,36 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projetocm.R
+import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.theme.ProjetoCMTheme
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
+import kotlinx.coroutines.launch
 
 @Composable
-fun SessionInProgress(onNavigateToCamera: () -> Unit, modifier: Modifier = Modifier) {
+fun SessionInProgress(onNavigateToCamera: () -> Unit,
+                      modifier: Modifier = Modifier,
+                      viewModel: SessionInProgressViewModel = viewModel(factory= AppViewModelProvider.Factory)
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+
+        val coroutineScope = rememberCoroutineScope()
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
@@ -47,18 +58,13 @@ fun SessionInProgress(onNavigateToCamera: () -> Unit, modifier: Modifier = Modif
             )) }
             var mapProperties by remember {mutableStateOf(MapProperties(mapType = MapType.NORMAL))}
 
-            GoogleMap(
+            /*GoogleMap(
                 properties = mapProperties,
                 uiSettings= uiSettings,
                 modifier = Modifier
                     .padding(10.dp)
-            )
+            )*/
         }
-
-        Spacer(
-            modifier = Modifier
-                .height(20.dp)
-        )
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -68,7 +74,8 @@ fun SessionInProgress(onNavigateToCamera: () -> Unit, modifier: Modifier = Modif
 
             SessionInfo(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
+                sessionInfoDetails = viewModel.sessionInfoUI.sessionInfoDetails
             )
 
             Spacer(
@@ -77,25 +84,26 @@ fun SessionInProgress(onNavigateToCamera: () -> Unit, modifier: Modifier = Modif
             )
 
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 Button(
-                    onClick = {},
+                    onClick = viewModel::pauseUnpauseClick,
                     modifier = Modifier
                         .weight(1f)
                 ) {
                     Text(
-                        text = stringResource(id = R.string.pause)
+                        text = stringResource(id = if(viewModel.sessionInfoUI.paused) R.string.r_continue else R.string.pause)
                     )
                 }
 
-                Spacer(
-                    modifier = Modifier
-                        .width(20.dp)
-                )
-
                 Button(
-                    onClick = {},
+                    onClick = {
+                              coroutineScope.launch {
+                                  viewModel.finishSession()
+                                  //mandar para a pagina de final de sessao
+                              }
+                    },
                     modifier = Modifier
                         .weight(1f)
                 ) {
@@ -124,23 +132,19 @@ fun SessionInProgress(onNavigateToCamera: () -> Unit, modifier: Modifier = Modif
 }
 
 @Composable
-fun SessionInfo(modifier: Modifier = Modifier) {
-    val time = 120
-    val distance = 4.8
-    val topSpeed = 9.4
-    val stepsTaken = 1568
-    val averageSpeed = 5.3
-    val calories = 593
-
+fun SessionInfo(
+    modifier: Modifier = Modifier,
+    sessionInfoDetails: SessionInfoDetails
+) {
     Column(
         modifier = modifier
     ) {
         InfoRow(
             text1Label = R.string.time_label,
-            text1Value = time.toString(),
-            text1Metric = R.string.minutes,
+            text1Value = sessionInfoDetails.time,
+            text1Metric = R.string.empty,
             text2Label = R.string.distance,
-            text2Value = distance.toString(),
+            text2Value = sessionInfoDetails.distance,
             text2Metric = R.string.km
         )
 
@@ -151,11 +155,11 @@ fun SessionInfo(modifier: Modifier = Modifier) {
         
         InfoRow(
             text1Label = R.string.top_speed,
-            text1Value = topSpeed.toString(),
+            text1Value = sessionInfoDetails.topSpeed,
             text1Metric = R.string.km_per_hour,
             text2Label = R.string.steps_taken,
-            text2Value = stepsTaken.toString(),
-            text2Metric = R.string.steps_taken
+            text2Value = sessionInfoDetails.stepsTaken,
+            text2Metric = R.string.empty
         )
 
         Spacer(
@@ -165,10 +169,10 @@ fun SessionInfo(modifier: Modifier = Modifier) {
         
         InfoRow(
             text1Label = R.string.average_speed,
-            text1Value = averageSpeed.toString(),
+            text1Value = sessionInfoDetails.averageSpeed,
             text1Metric = R.string.km_per_hour,
             text2Label = R.string.calories_burned,
-            text2Value = calories.toString(),
+            text2Value = sessionInfoDetails.calories,
             text2Metric = R.string.cal
         )
     }
@@ -202,7 +206,8 @@ fun InfoRow(
                 style= MaterialTheme.typography.labelSmall
             )
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp)
             ) {
                 Text(
                     text= text1Value,
@@ -226,7 +231,8 @@ fun InfoRow(
                 style= MaterialTheme.typography.labelSmall
             )
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp)
             ) {
                 Text(
                     text= text2Value,

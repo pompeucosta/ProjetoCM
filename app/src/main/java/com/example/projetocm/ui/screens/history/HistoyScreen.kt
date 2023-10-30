@@ -10,29 +10,45 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projetocm.R
+import com.example.projetocm.data.HistorySession
 import com.example.projetocm.data.Session
 import com.example.projetocm.data.sessions
+import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.theme.ProjetoCMTheme
 
 
 @Composable
-fun History(modifier: Modifier = Modifier) {
-    LazyColumn(modifier= modifier) {
-        items(sessions) { session ->
-            SessionItem(session = session)
+fun History(
+    modifier: Modifier = Modifier,
+    viewModel: HistoryViewModel = viewModel(factory= AppViewModelProvider.Factory)
+) {
+    val sessions by viewModel.savedSessionsUIState.collectAsState()
+    val sessionList = sessions.sessionList
 
+    if(sessionList.isEmpty()) {
+
+    }
+    else {
+        LazyColumn(modifier= modifier) {
+            items(sessionList) { session ->
+                SessionItem(session = session.toUIInfo())
+            }
         }
     }
+
 }
 
 @Composable
 fun SessionItem(
-    session: Session,
+    session: HistorySessionUIInfo,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -59,7 +75,7 @@ fun SessionItem(
                     .weight(1f)
             ) {
                 Text(
-                    text= "${session.km} km",
+                    text= session.sessionDetails.distance,
                     style= MaterialTheme.typography.displayMedium
                 )
             }
@@ -76,7 +92,7 @@ fun SessionItem(
                     .weight(1f)
             ) {
                 Text(
-                    text= "${session.date}", //"${session.date.dayOfMonth}/${session.date.month}/${session.date.year}"
+                    text= session.date, //"${session.date.dayOfMonth}/${session.date.month}/${session.date.year}"
                     style= MaterialTheme.typography.bodyLarge
                 )
             }
@@ -86,7 +102,7 @@ fun SessionItem(
                     .weight(1f)
             ) {
                 Text(
-                    text = session.time,
+                    text = session.sessionDetails.time,
                     style= MaterialTheme.typography.labelSmall
                 )
             }

@@ -192,7 +192,7 @@ fun Distance(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextField(
-                    value="0",
+                    value=presetDetails.km,
                     onValueChange = {onValueChange(presetDetails.copy(km= it))},
                     keyboardOptions = KeyboardOptions.Default.copy(
                         keyboardType = KeyboardType.Number),
@@ -225,7 +225,7 @@ fun OneWay(
             style= MaterialTheme.typography.displayMedium
         )
         Switch(
-            checked = false,
+            checked = presetDetails.twoWay,
             onCheckedChange= {onCheckedChange(presetDetails.copy(twoWay = it))},
             modifier= Modifier
                 .fillMaxWidth()

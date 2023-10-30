@@ -6,12 +6,13 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [RunPreset::class],
+    entities = [RunPreset::class,HistorySession::class],
     version = 1,
     exportSchema = false
 )
 abstract class ProjetoDatabase: RoomDatabase() {
     abstract fun runPresetDao(): RunPresetDao
+    abstract fun historySessionDao(): HistorySessionDao
 
     companion object {
         @Volatile

@@ -18,6 +18,8 @@
     <string name="calories_burned">Calories burned:</string>
     <string name="cal">cal</string>
     <string name="pause">Pause</string>
+    <string name="r_continue">Continue</string>
     <string name="finish">Finish</string>
     <string name="take_photo">Take photo</string>
+    <string name="empty"></string>
 </resources>

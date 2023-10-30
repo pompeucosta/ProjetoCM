@@ -1,5 +1,6 @@
 package com.example.projetocm.ui.screens.savedRuns
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -16,7 +17,7 @@ data class RunPresetDetails(
     val hours: String = "0",
     val minutes: String = "0",
     val seconds: String = "0",
-    val km: String = "",
+    val km: String = "0",
     val twoWay: Boolean = false,
     val id: Int = 0
 )
