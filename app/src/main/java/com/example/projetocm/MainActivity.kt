@@ -3,7 +3,6 @@ package com.example.projetocm
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,7 +13,6 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.List
-import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -25,7 +23,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -35,10 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.key.Key.Companion.I
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -48,6 +42,7 @@ import com.example.projetocm.ui.screens.history.History
 import com.example.projetocm.ui.screens.savedRuns.SavedRuns
 import com.example.projetocm.ui.screens.session.SessionInProgress
 import com.example.projetocm.ui.screens.camera.MainCameraScreen
+import com.example.projetocm.ui.screens.home.Home
 import com.example.projetocm.ui.screens.savedRuns.CreateRun
 import com.example.projetocm.ui.screens.session.SessionEndDetails
 import com.example.projetocm.ui.theme.ProjetoCMTheme
@@ -65,6 +60,7 @@ sealed class Screen(
     data object CameraPreview: Screen("Run In Progress","cameraPreview",Icons.Filled.List,Icons.Outlined.List)
     data object CreateRunPreset: Screen("Create Preset","createPreset",Icons.Filled.List,Icons.Outlined.List,true)
     data object SessionEnd: Screen("Session Details","sessionEnd",Icons.Filled.List,Icons.Outlined.List,true)
+    data object Home: Screen("Welcome","home",Icons.Filled.Home,Icons.Outlined.Home)
 }
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -73,8 +69,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             ProjetoCMTheme {
                 val items = listOf(
-                    Screen.History,
-                    Screen.PresetRuns
+                    Screen.Home,
+                    Screen.PresetRuns,
+                    Screen.History
                 )
                 var selectedItemIndex by rememberSaveable {
                     mutableIntStateOf(0)
@@ -126,7 +123,13 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     ) {
-                        NavHost(navController = navController, startDestination = Screen.History.route, Modifier.padding(it)) {
+                        NavHost(navController = navController, startDestination = Screen.Home.route, Modifier.padding(it)) {
+                            composable(Screen.Home.route) {
+                                Home()
+                                topBarTitle = Screen.Home.title
+                                canNavigateBack = Screen.Home.canNavigateBack
+                                lastScreen = Screen.Home
+                            }
                             composable(Screen.History.route) {
                                 History(
                                     onSessionClick= {id ->

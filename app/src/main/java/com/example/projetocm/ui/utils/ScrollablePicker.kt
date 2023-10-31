@@ -101,7 +101,6 @@ fun Picker(
     }
 
     LaunchedEffect(listState) {
-        Log.d("launched",listStartIndex.toString())
         snapshotFlow { listState.firstVisibleItemIndex }
             .map { index -> getItem(index + visibleItemsMiddle) }
             .distinctUntilChanged()

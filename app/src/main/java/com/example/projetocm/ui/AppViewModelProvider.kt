@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.projetocm.MainApplication
 import com.example.projetocm.ui.screens.history.HistoryViewModel
+import com.example.projetocm.ui.screens.home.HomeViewModel
 import com.example.projetocm.ui.screens.savedRuns.CreateRunViewModel
 import com.example.projetocm.ui.screens.savedRuns.SavedRunsViewModel
 import com.example.projetocm.ui.screens.session.SessionEndDetailsViewModel
@@ -32,6 +33,10 @@ object AppViewModelProvider{
 
         initializer {
             SessionEndDetailsViewModel(this.createSavedStateHandle(),mainApplication().container.sessionsRepository)
+        }
+
+        initializer {
+            HomeViewModel(mainApplication().container.sessionsRepository)
         }
     }
 }
