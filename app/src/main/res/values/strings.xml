@@ -21,4 +21,8 @@
     <string name="finish">Finish</string>
     <string name="take_photo">Take photo</string>
     <string name="empty"></string>
+    <string name="delete">delete</string>
+    <string name="edit">edit</string>
+    <string name="back">back</string>
+    <string name="preset_name">Preset name:</string>
 </resources>

@@ -12,11 +12,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -24,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -36,6 +40,7 @@ import com.example.projetocm.data.RunPreset
 import com.example.projetocm.data.RunPresets
 import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.theme.ProjetoCMTheme
+import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,8 +49,10 @@ fun SavedRuns(
     modifier: Modifier = Modifier,
     viewModel: SavedRunsViewModel = viewModel(factory= AppViewModelProvider.Factory),
     onAddBtnClick: () -> Unit = {},
-    onPresetClick: (Int) -> Unit
+    onPresetClick: (Int) -> Unit = {},
+    onEditClick: (Int) -> Unit = {}
 ) {
+    val coroutineScope = rememberCoroutineScope()
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = onAddBtnClick) {
@@ -63,8 +70,20 @@ fun SavedRuns(
             PresetList(
                 list = presetList,
                 onPresetClick = {
-                    //abrir a pagina CreateRun com os detalhes do preset
                     onPresetClick(it.id)
+                },
+                onEditClick = {
+                    onEditClick(it.id)
+                },
+                onDeleteClick = {
+                    coroutineScope.launch {
+                        viewModel.delete(it)
+                    }
+                },
+                onCheckedChange = {
+                    coroutineScope.launch {
+                        viewModel.save(it)
+                    }
                 },
                 modifier= modifier.padding(innerPadding))
         }
@@ -76,7 +95,10 @@ fun SavedRuns(
 fun PresetList(
     list: List<RunPreset>,
     modifier: Modifier = Modifier,
-    onPresetClick: (RunPreset) -> Unit = {}
+    onPresetClick: (RunPreset) -> Unit = {},
+    onEditClick: (RunPreset) -> Unit = {},
+    onDeleteClick: (RunPreset) -> Unit = {},
+    onCheckedChange: (RunPreset) -> Unit = {}
 ) {
     LazyColumn(modifier = modifier) {
         items(items= list, key = {it.id}) { preset ->
@@ -86,7 +108,10 @@ fun PresetList(
                     .padding(dimensionResource(id = R.dimen.padding_medium))
                     .clickable {
                         onPresetClick(preset)
-                    }
+                    },
+                onEditClick= onEditClick,
+                onDeleteClick= onDeleteClick,
+                onCheckedChange= onCheckedChange
             )
         }
     }
@@ -95,7 +120,10 @@ fun PresetList(
 @Composable
 fun Preset(
     preset: RunPresetDetails,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onEditClick: (RunPreset) -> Unit = {},
+    onDeleteClick: (RunPreset) -> Unit = {},
+    onCheckedChange: (RunPreset) -> Unit = {}
 ) {
     ElevatedCard(
         elevation = CardDefaults.cardElevation(
@@ -109,6 +137,35 @@ fun Preset(
                 .padding(dimensionResource(id = R.dimen.padding_medium))
         )
         {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.Start,
+                    modifier= Modifier.weight(1f)
+                ) {
+                    Text(
+                        text= preset.name,
+                        style= MaterialTheme.typography.labelSmall
+                    )
+                }
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Row {
+                        IconButton(onClick = { onEditClick(preset.toRunPreset()) }) {
+                            Icon(Icons.Filled.Edit,contentDescription = stringResource(id = R.string.edit))
+                        }
+
+                        IconButton(onClick = { onDeleteClick(preset.toRunPreset()) }) {
+                            Icon(Icons.Filled.Delete, contentDescription = stringResource(id = R.string.delete))
+                        }
+                    }
+                }
+            }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -153,7 +210,7 @@ fun Preset(
                         .fillMaxWidth()
                         .wrapContentWidth(Alignment.End),
                     checked = preset.twoWay,
-                    onCheckedChange = {}
+                    onCheckedChange = { onCheckedChange(preset.copy(twoWay = it).toRunPreset())}
                 )
             }
         }

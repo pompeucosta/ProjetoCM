@@ -21,6 +21,7 @@ data class RunPresetUIState(
 )
 
 data class RunPresetDetails(
+    val name: String = "Run Preset",
     val hours: String = "0",
     val minutes: String = "0",
     val seconds: String = "0",
@@ -34,7 +35,7 @@ fun RunPreset.toRunPresetDetails(): RunPresetDetails {
     val minutes: Int = (seconds % 3600) / 60
     val seconds: Int = seconds % 60
 
-    return RunPresetDetails(hours.toString(),minutes.toString(),seconds.toString(),km.toString(),twoWay,id)
+    return RunPresetDetails(name,hours.toString(),minutes.toString(),seconds.toString(),km.toString(),twoWay,id)
 }
 
 fun RunPreset.toUIState(isEntryValid: Boolean): RunPresetUIState = RunPresetUIState(
@@ -47,7 +48,7 @@ fun RunPresetDetails.toRunPreset(): RunPreset {
     val minutes = minutes.toIntOrNull() ?: 0
     val seconds = seconds.toIntOrNull() ?: 0
 
-    return RunPreset(hours * 3600 + minutes * 60 + seconds,km.toInt(),twoWay,id)
+    return RunPreset(name,hours * 3600 + minutes * 60 + seconds,km.toInt(),twoWay,id)
 }
 
 class CreateRunViewModel(

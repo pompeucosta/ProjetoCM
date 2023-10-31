@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [RunPreset::class,HistorySession::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class ProjetoDatabase: RoomDatabase() {

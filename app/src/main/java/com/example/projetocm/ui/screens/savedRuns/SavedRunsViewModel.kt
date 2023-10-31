@@ -11,11 +11,19 @@ import kotlinx.coroutines.flow.stateIn
 
 data class SavedRunsUIState(val presetList: List<RunPreset> = listOf())
 
-class SavedRunsViewModel(runPresetsRepository: RunPresetsRepository): ViewModel() {
+class SavedRunsViewModel(private val runPresetsRepository: RunPresetsRepository): ViewModel() {
     val savedRunsUIState: StateFlow<SavedRunsUIState> = runPresetsRepository.getAllPresetsStream().map { SavedRunsUIState(it) }
         .stateIn(
             scope=viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = SavedRunsUIState()
         )
+
+    suspend fun delete(preset: RunPreset) {
+        runPresetsRepository.deletePreset(preset)
+    }
+
+    suspend fun save(preset: RunPreset) {
+        runPresetsRepository.upsertPreset(preset)
+    }
 }

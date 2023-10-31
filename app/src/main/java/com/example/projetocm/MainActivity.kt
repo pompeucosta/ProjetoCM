@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -129,7 +130,8 @@ class MainActivity : ComponentActivity() {
                             }
                             composable(Screen.PresetRuns.route) {
                                 SavedRuns(onAddBtnClick = { navController.navigate("${Screen.CreateRunPreset.route}/-1")},
-                                    onPresetClick = {id -> navController.navigate("createPreset/$id")})
+                                    onEditClick = {id -> navController.navigate("createPreset/$id")},
+                                    onPresetClick = {id -> navController.navigate(Screen.RunInProgress.route)})
                                 topBarTitle = Screen.PresetRuns.title
                                 canNavigateBack = Screen.PresetRuns.canNavigateBack
                             }
@@ -180,7 +182,7 @@ fun TopAppBar(
         navigationIcon = {
             if(canNavigateBack)
                 IconButton(onClick = navigateBackClick) {
-                    Icon(Icons.Filled.ArrowBack,contentDescription = "back")
+                    Icon(Icons.Filled.ArrowBack,contentDescription = stringResource(id = R.string.back))
                 }
         },
         modifier = modifier

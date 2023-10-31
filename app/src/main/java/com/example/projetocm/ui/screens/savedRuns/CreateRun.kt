@@ -1,6 +1,5 @@
 package com.example.projetocm.ui.screens.savedRuns
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,6 +44,12 @@ fun CreateRun(
         modifier = modifier.padding(dimensionResource(id = R.dimen.padding_medium)),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        Name(
+            viewModel.presetUIState.presetDetails,
+            modifier = Modifier.fillMaxWidth(),
+            onValueChange = viewModel::updateUIState
+        )
+
         Text(
             text= stringResource(id = R.string.time_label),
             style= MaterialTheme.typography.displayMedium,
@@ -77,6 +82,7 @@ fun CreateRun(
             verticalAlignment = Alignment.Bottom,
             modifier = Modifier
                 .weight(weight= 1f,fill = true)
+                .padding(bottom = 8.dp)
         ) {
             Button(
                 onClick = {
@@ -93,24 +99,32 @@ fun CreateRun(
                     text= stringResource(id = R.string.save)
                 )
             }
-
-                /*Button(
-                    onClick = {
-                              coroutineScope.launch {
-                                  viewModel.savePreset()
-                                  //navigateToSession(viewModel.presetUIState.presetDetails.id)
-                              }
-                    },
-                    enabled = viewModel.presetUIState.isEntryValid,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    Text(
-                        text= stringResource(id = R.string.start_running)
-                    )
-                }*/
         }
 
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Name(
+    presetDetails: RunPresetDetails,
+    modifier: Modifier = Modifier,
+    onValueChange: (RunPresetDetails) -> Unit = {}
+) {
+    Row(
+        modifier = modifier
+    ) {
+        Text(
+            text= stringResource(id = R.string.preset_name),
+            style = MaterialTheme.typography.displayMedium,
+            modifier= Modifier.weight(1f)
+        )
+        TextField(
+            value = presetDetails.name,
+            onValueChange = { onValueChange(presetDetails.copy(name = it)) },
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Number, imeAction = ImeAction.Done)
+        )
     }
 }
 
