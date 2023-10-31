@@ -3,23 +3,29 @@ package com.example.projetocm
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.List
+import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -29,10 +35,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.projetocm.ui.screens.history.History
 import com.example.projetocm.ui.screens.savedRuns.SavedRuns
 import com.example.projetocm.ui.screens.session.SessionInProgress
@@ -45,12 +54,13 @@ sealed class Screen(
     val route: String,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
+    val canNavigateBack: Boolean = false
 ) {
     data object History: Screen("History","history",Icons.Filled.Home,Icons.Outlined.Home)
     data object PresetRuns: Screen("Runs","presetRuns",Icons.Filled.List,Icons.Outlined.List)
     data object RunInProgress: Screen("Run In Progress","runInProgress",Icons.Filled.List,Icons.Outlined.List)
     data object CameraPreview: Screen("Run In Progress","cameraPreview",Icons.Filled.List,Icons.Outlined.List)
-    data object  CreateRunPreset: Screen("Create Preset","createPreset",Icons.Filled.List,Icons.Outlined.List)
+    data object  CreateRunPreset: Screen("Create Preset","createPreset",Icons.Filled.List,Icons.Outlined.List,true)
 }
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -72,6 +82,10 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(Screen.History.title)
                 }
 
+                var canNavigateBack by rememberSaveable {
+                    mutableStateOf(false)
+                }
+
                 //https://developer.android.com/jetpack/compose/navigation#bottom-nav
                 val navController = rememberNavController()
                 // A surface container using the 'background' color from the theme
@@ -81,7 +95,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Scaffold(
                         topBar = {
-                            TopAppBar(title = topBarTitle)
+                            TopAppBar(title = topBarTitle,canNavigateBack = canNavigateBack, navigateBackClick = {navController.popBackStack()}, modifier = Modifier.fillMaxWidth())
                         },
                         bottomBar = {
                             NavigationBar {
@@ -90,7 +104,6 @@ class MainActivity : ComponentActivity() {
                                         selected = selectedItemIndex == index,
                                         onClick = {
                                                   selectedItemIndex = index
-                                            topBarTitle = item.title
                                             navController.navigate(item.route)
                                         },
                                         label = {
@@ -109,11 +122,34 @@ class MainActivity : ComponentActivity() {
                         }
                     ) {
                         NavHost(navController = navController, startDestination = Screen.History.route, Modifier.padding(it)) {
-                            composable(Screen.History.route) { History()}
-                            composable(Screen.PresetRuns.route) { SavedRuns(onAddBtnClick = { navController.navigate(Screen.CreateRunPreset.route)})}
-                            composable(Screen.RunInProgress.route) { SessionInProgress(onNavigateToCamera = { navController.navigate(Screen.CameraPreview.route) }) }
-                            composable(Screen.CameraPreview.route) { MainCameraScreen() }
-                            composable(Screen.CreateRunPreset.route) { CreateRun()}
+                            composable(Screen.History.route) {
+                                History()
+                                topBarTitle = Screen.History.title
+                                canNavigateBack = Screen.History.canNavigateBack
+                            }
+                            composable(Screen.PresetRuns.route) {
+                                SavedRuns(onAddBtnClick = { navController.navigate("${Screen.CreateRunPreset.route}/-1")},
+                                    onPresetClick = {id -> navController.navigate("createPreset/$id")})
+                                topBarTitle = Screen.PresetRuns.title
+                                canNavigateBack = Screen.PresetRuns.canNavigateBack
+                            }
+                            composable(Screen.RunInProgress.route) {
+                                SessionInProgress(onNavigateToCamera = { navController.navigate(Screen.CameraPreview.route) })
+                                topBarTitle = Screen.RunInProgress.title
+                                canNavigateBack = Screen.RunInProgress.canNavigateBack
+                            }
+                            composable(Screen.CameraPreview.route) {
+                                MainCameraScreen()
+                                canNavigateBack = Screen.CameraPreview.canNavigateBack
+                                topBarTitle = ""
+                            }
+                            composable("${Screen.CreateRunPreset.route}/{id}",
+                                arguments = listOf(navArgument("id") {type= NavType.IntType})
+                            ) {
+                                CreateRun(navigateToPresets = {navController.navigate(Screen.PresetRuns.route)})
+                                topBarTitle = Screen.CreateRunPreset.title
+                                canNavigateBack = Screen.CreateRunPreset.canNavigateBack
+                            }
                         }
                     }
                 }
@@ -124,17 +160,28 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopAppBar(title: String,modifier: Modifier = Modifier) {
+fun TopAppBar(
+    title: String,
+    canNavigateBack: Boolean,
+    modifier: Modifier = Modifier,
+    navigateBackClick: () -> Unit = {}
+) {
     CenterAlignedTopAppBar(
         title = {
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text= title,
-                    style= MaterialTheme.typography.displayLarge
+                    style= MaterialTheme.typography.displayLarge,
                 )
             }
+        },
+        navigationIcon = {
+            if(canNavigateBack)
+                IconButton(onClick = navigateBackClick) {
+                    Icon(Icons.Filled.ArrowBack,contentDescription = "back")
+                }
         },
         modifier = modifier
     )

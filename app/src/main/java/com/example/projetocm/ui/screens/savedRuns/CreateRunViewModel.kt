@@ -1,12 +1,19 @@
 package com.example.projetocm.ui.screens.savedRuns
 
 import android.util.Log
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.projetocm.data.RunPreset
 import com.example.projetocm.data.repositories.RunPresetsRepository
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 data class RunPresetUIState(
     val presetDetails: RunPresetDetails = RunPresetDetails(),
@@ -43,16 +50,32 @@ fun RunPresetDetails.toRunPreset(): RunPreset {
     return RunPreset(hours * 3600 + minutes * 60 + seconds,km.toInt(),twoWay,id)
 }
 
-class CreateRunViewModel(private val presetsRepository: RunPresetsRepository): ViewModel() {
+class CreateRunViewModel(
+    private val presetsRepository: RunPresetsRepository,
+    savedStateHandle: SavedStateHandle
+): ViewModel() {
+
+    private val itemId: Int = savedStateHandle["id"] ?: -1
+
     var presetUIState by mutableStateOf(RunPresetUIState())
         private set
+
+    init {
+        if(itemId >= 0) {
+            viewModelScope.launch {
+                presetUIState = presetsRepository.getPresetStream(itemId)
+                    .filterNotNull()
+                    .first()
+                    .toUIState(true)
+            }
+        }
+    }
 
     suspend fun savePreset() {
         presetsRepository.upsertPreset(presetUIState.presetDetails.toRunPreset())
     }
 
     fun updateUIState(presetDetails: RunPresetDetails) {
-        Log.d("t",presetDetails.km)
         presetUIState = RunPresetUIState(presetDetails= presetDetails, isEntryValid = validateInput(presetDetails))
     }
 

@@ -1,6 +1,7 @@
 package com.example.projetocm.ui
 
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -13,7 +14,7 @@ import com.example.projetocm.ui.screens.session.SessionInProgressViewModel
 object AppViewModelProvider{
     val Factory = viewModelFactory {
         initializer {
-            CreateRunViewModel(mainApplication().container.presetsRepository)
+            CreateRunViewModel(mainApplication().container.presetsRepository,this.createSavedStateHandle())
         }
 
         initializer {

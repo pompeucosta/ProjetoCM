@@ -43,7 +43,8 @@ import com.example.projetocm.ui.theme.ProjetoCMTheme
 fun SavedRuns(
     modifier: Modifier = Modifier,
     viewModel: SavedRunsViewModel = viewModel(factory= AppViewModelProvider.Factory),
-    onAddBtnClick: () -> Unit = {}
+    onAddBtnClick: () -> Unit = {},
+    onPresetClick: (Int) -> Unit
 ) {
     Scaffold(
         floatingActionButton = {
@@ -63,7 +64,7 @@ fun SavedRuns(
                 list = presetList,
                 onPresetClick = {
                     //abrir a pagina CreateRun com os detalhes do preset
-
+                    onPresetClick(it.id)
                 },
                 modifier= modifier.padding(innerPadding))
         }
@@ -143,7 +144,7 @@ fun Preset(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(id = R.string.one_way),
+                    text = stringResource(id = R.string.two_way),
                     style = MaterialTheme.typography.displayMedium
                 )
 

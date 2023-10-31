@@ -1,6 +1,6 @@
 package com.example.projetocm.ui.screens.savedRuns
 
-import androidx.compose.foundation.border
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,7 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -37,7 +36,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun CreateRun(
     modifier: Modifier = Modifier,
-    viewModel: CreateRunViewModel = viewModel(factory= AppViewModelProvider.Factory)
+    viewModel: CreateRunViewModel = viewModel(factory= AppViewModelProvider.Factory),
+    navigateToPresets: () -> Unit = {}
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -66,7 +66,7 @@ fun CreateRun(
                 .fillMaxWidth()
         )
 
-        OneWay(
+        TwoWay(
             presetDetails = viewModel.presetUIState.presetDetails,
             onCheckedChange = viewModel::updateUIState,
             modifier= Modifier
@@ -78,28 +78,27 @@ fun CreateRun(
             modifier = Modifier
                 .weight(weight= 1f,fill = true)
         ) {
-            Column{
-                Button(
-                    onClick = {
-                        coroutineScope.launch {
-                            viewModel.savePreset()
-                            //voltar para a pagina dos presets
-                        }
-                    },
-                    enabled = viewModel.presetUIState.isEntryValid,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    Text(
-                        text= stringResource(id = R.string.save)
-                    )
-                }
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        viewModel.savePreset()
+                        navigateToPresets()
+                    }
+                },
+                enabled = viewModel.presetUIState.isEntryValid,
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text= stringResource(id = R.string.save)
+                )
+            }
 
-                Button(
+                /*Button(
                     onClick = {
                               coroutineScope.launch {
                                   viewModel.savePreset()
-                                  //comecar a sessao
+                                  //navigateToSession(viewModel.presetUIState.presetDetails.id)
                               }
                     },
                     enabled = viewModel.presetUIState.isEntryValid,
@@ -109,8 +108,7 @@ fun CreateRun(
                     Text(
                         text= stringResource(id = R.string.start_running)
                     )
-                }
-            }
+                }*/
         }
 
     }
@@ -135,6 +133,7 @@ fun TimePicker(
         Picker(
             items= hours,
             visibleItemsCount = 3,
+            startIndex = presetDetails.hours.toIntOrNull() ?: 0,
             onItemSelectedChange = { onValueChange(presetDetails.copy(hours= it)) },
             companionText= stringResource(id = R.string.hours),
             companionTextStyle= MaterialTheme.typography.labelSmall,
@@ -145,6 +144,7 @@ fun TimePicker(
         Picker(
             items= minutes,
             visibleItemsCount = 3,
+            startIndex = presetDetails.minutes.toIntOrNull() ?: 0,
             onItemSelectedChange = {onValueChange(presetDetails.copy(minutes= it))},
             companionText= stringResource(id = R.string.minutes),
             companionTextStyle= MaterialTheme.typography.labelSmall,
@@ -155,6 +155,7 @@ fun TimePicker(
         Picker(
             items= seconds,
             visibleItemsCount = 3,
+            startIndex = presetDetails.seconds.toIntOrNull() ?: 0,
             onItemSelectedChange = {onValueChange(presetDetails.copy(seconds= it))},
             companionText= stringResource(id = R.string.seconds),
             companionTextStyle= MaterialTheme.typography.labelSmall,
@@ -214,7 +215,7 @@ fun Distance(
 }
 
 @Composable
-fun OneWay(
+fun TwoWay(
     presetDetails: RunPresetDetails,
     modifier: Modifier= Modifier,
     onCheckedChange: (RunPresetDetails) -> Unit
@@ -224,7 +225,7 @@ fun OneWay(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text= stringResource(id = R.string.one_way),
+            text= stringResource(id = R.string.two_way),
             style= MaterialTheme.typography.displayMedium
         )
         Switch(

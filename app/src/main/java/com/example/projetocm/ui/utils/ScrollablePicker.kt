@@ -1,5 +1,6 @@
 package com.example.projetocm.ui.utils
 
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
@@ -21,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -39,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 //Source: https://stackoverflow.com/questions/68187868/android-jetpack-compose-numberpicker-widget-equivalent
 
@@ -66,7 +69,6 @@ fun Picker(
     companionText: String = "",
     companionTextStyle: TextStyle = LocalTextStyle.current
 ) {
-
     val visibleItemsMiddle = visibleItemsCount / 2
     val listScrollCount = Integer.MAX_VALUE
     val listScrollMiddle = listScrollCount / 2
@@ -76,6 +78,7 @@ fun Picker(
     fun getItem(index: Int) = items[index % items.size]
 
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = listStartIndex)
+
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
 
     //very required!!!!
@@ -93,7 +96,12 @@ fun Picker(
         )
     }
 
+    LaunchedEffect(listStartIndex) {
+        listState.scrollToItem(listStartIndex)
+    }
+
     LaunchedEffect(listState) {
+        Log.d("launched",listStartIndex.toString())
         snapshotFlow { listState.firstVisibleItemIndex }
             .map { index -> getItem(index + visibleItemsMiddle) }
             .distinctUntilChanged()
@@ -103,40 +111,40 @@ fun Picker(
             }
     }
 
-        Row(
-            modifier= modifier,
-            horizontalArrangement = Arrangement.Center
+    Row(
+        modifier= modifier,
+        horizontalArrangement = Arrangement.Center
+    ) {
+
+        LazyColumn(
+            state = listState,
+            flingBehavior = flingBehavior,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .height(itemHeightDp * visibleItemsCount)
+                .fadingEdge(fadingEdgeGradient)
         ) {
+            items(listScrollCount) { index ->
+                Text(
+                    text = getItem(index),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = textStyle,
+                    modifier = Modifier
+                        .onSizeChanged { size -> itemHeightPixels.value = size.height }
+                        .then(textModifier)
+                )
 
-            LazyColumn(
-                state = listState,
-                flingBehavior = flingBehavior,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .height(itemHeightDp * visibleItemsCount)
-                    .fadingEdge(fadingEdgeGradient)
-            ) {
-                items(listScrollCount) { index ->
-                    Text(
-                        text = getItem(index),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = textStyle,
-                        modifier = Modifier
-                            .onSizeChanged { size -> itemHeightPixels.value = size.height }
-                            .then(textModifier)
-                    )
-
-                }
             }
-
-            Text(
-                text = companionText,
-                style = companionTextStyle,
-                modifier = Modifier.offset(y=itemHeightDp * (visibleItemsCount / 2))
-            )
-
         }
+
+        Text(
+            text = companionText,
+            style = companionTextStyle,
+            modifier = Modifier.offset(y=itemHeightDp * (visibleItemsCount / 2))
+        )
+
+    }
 
 }
 
