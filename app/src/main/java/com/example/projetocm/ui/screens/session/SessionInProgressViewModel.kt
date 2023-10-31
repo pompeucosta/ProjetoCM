@@ -1,15 +1,25 @@
 package com.example.projetocm.ui.screens.session
 
+import android.app.NotificationManager
+import android.content.Context
 import android.os.CountDownTimer
 import android.os.SystemClock
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.app.NotificationCompat
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.projetocm.R
 import com.example.projetocm.data.HistorySession
+import com.example.projetocm.data.RunPreset
 import com.example.projetocm.data.SessionInfo
 import com.example.projetocm.data.repositories.HistorySessionsRepository
+import com.example.projetocm.data.repositories.RunPresetsRepository
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 data class SessionInfoUI(
@@ -25,8 +35,6 @@ data class SessionInfoDetails(
     val averageSpeed: String = "0",
     val calories: String = "0"
 )
-
-fun SessionInfo.toUIInfo(): SessionInfoUI = SessionInfoUI(sessionInfoDetails =  this.toUIDetails())
 
 fun SessionInfo.toUIDetails(): SessionInfoDetails {
     val hours = seconds / 3600
@@ -47,15 +55,26 @@ fun SessionInfoUI.toSessionInfo(): SessionInfo {
     , averageSpeed = sessionInfoDetails.averageSpeed.toFloatOrNull() ?: 0f, calories = sessionInfoDetails.calories.toIntOrNull() ?: 0)
 }
 
-class SessionInProgressViewModel(private val historySessionsRepository: HistorySessionsRepository) : ViewModel() {
+class SessionInProgressViewModel(
+    savedStateHandle: SavedStateHandle,
+    private val appContext: Context,
+    private val historySessionsRepository: HistorySessionsRepository,
+    private val runsRepository: RunPresetsRepository
+) : ViewModel() {
     var sessionInfoUI by mutableStateOf(SessionInfoUI())
         private set
 
+    private val runId = savedStateHandle["id"] ?: -1
+    private var goalRun: RunPreset = RunPreset("",0,0,false)
     //private val coordinates: List<String> = emptyList() //lista de coordenadas da localizacao (trocar de string para o tipo certo)
 
     private var startTime: Long = 0
     private var location = "" //localizacao tipo Aveiro ou Porto
     private val today = LocalDate.now()
+
+    private var timeWarned = false
+    private var hasPermission = false
+    private var distanceWarned = false
 
     private val timer: CountDownTimer = object : CountDownTimer(Long.MAX_VALUE,1000) {
         override fun onTick(millisUntilFinished: Long) {
@@ -66,7 +85,14 @@ class SessionInProgressViewModel(private val historySessionsRepository: HistoryS
     }
 
     init {
-        startTimer()
+        if(runId >= 0) {
+            viewModelScope.launch {
+                goalRun = runsRepository.getPresetStream(runId)
+                    .filterNotNull()
+                    .first()
+                startTimer()
+            }
+        }
     }
 
     private fun startTimer() {
@@ -79,6 +105,10 @@ class SessionInProgressViewModel(private val historySessionsRepository: HistoryS
             unpause()
         else
             pause()
+    }
+
+    fun updatePermission(permission: Boolean) {
+        hasPermission = permission
     }
 
     suspend fun finishSession() {
@@ -105,13 +135,33 @@ class SessionInProgressViewModel(private val historySessionsRepository: HistoryS
 
     private fun updateElapsedTime() {
         val currentTime = SystemClock.elapsedRealtime()
-        val elapsedTime = (currentTime - startTime) / 1000
+        val elapsedTime = (currentTime - startTime) / 1000 //total seconds since start
         val hours = elapsedTime / 3600
         val minutes = (elapsedTime % 3600) / 60
         val seconds = elapsedTime % 60
-        Log.d("time elapsed",elapsedTime.toString())
-        Log.d("time",startTime.toString())
-        Log.d("time",seconds.toString())
+
+        if(hasPermission && !timeWarned && elapsedTime >= goalRun.seconds) {
+            //send notification
+            sendNotification("You have reached the time goal!!")
+            timeWarned = true
+        }
+
+        if(hasPermission && !distanceWarned && (sessionInfoUI.sessionInfoDetails.distance.toIntOrNull() ?: 0) >= goalRun.km) {
+            sendNotification("You have completed your distance goal!!")
+            distanceWarned = true
+        }
+
         sessionInfoUI = sessionInfoUI.copy(sessionInfoDetails = sessionInfoUI.sessionInfoDetails.copy(time= String.format("%02d:%02d:%02d", hours, minutes, seconds)))
+    }
+
+    private fun sendNotification(message: String) {
+        val notification = NotificationCompat.Builder(appContext,"session_channel")
+            .setContentText(message)
+            .setContentTitle("Session goal")
+            .setSmallIcon(R.drawable.ic_launcher_background)
+            .build()
+
+        val notificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(1,notification)
     }
 }

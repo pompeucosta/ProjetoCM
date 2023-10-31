@@ -22,7 +22,7 @@ object AppViewModelProvider{
         }
 
         initializer {
-            SessionInProgressViewModel(mainApplication().container.sessionsRepository)
+            SessionInProgressViewModel(this.createSavedStateHandle(),mainApplication().appContext,mainApplication().container.sessionsRepository,mainApplication().container.presetsRepository)
         }
 
         initializer {

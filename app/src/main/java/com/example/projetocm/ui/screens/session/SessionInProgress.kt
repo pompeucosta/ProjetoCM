@@ -1,5 +1,12 @@
 package com.example.projetocm.ui.screens.session
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,13 +29,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projetocm.R
 import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.theme.ProjetoCMTheme
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
@@ -35,9 +46,10 @@ import com.google.maps.android.compose.MapUiSettings
 import kotlinx.coroutines.launch
 
 @Composable
-fun SessionInProgress(onNavigateToCamera: () -> Unit,
-                      modifier: Modifier = Modifier,
-                      viewModel: SessionInProgressViewModel = viewModel(factory= AppViewModelProvider.Factory)
+fun SessionInProgress(
+    onNavigateToCamera: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SessionInProgressViewModel = viewModel(factory= AppViewModelProvider.Factory)
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -46,6 +58,34 @@ fun SessionInProgress(onNavigateToCamera: () -> Unit,
     ) {
 
         val coroutineScope = rememberCoroutineScope()
+        val launcher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = {isGranted ->
+                viewModel.updatePermission(isGranted)
+            }
+        )
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val context = LocalContext.current
+
+            LaunchedEffect(launcher) {
+                when(PackageManager.PERMISSION_GRANTED) {
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ) -> {
+                        viewModel.updatePermission(true)
+                    }
+                    else -> {
+                        launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+            }
+        }
+        else {
+            viewModel.updatePermission(true)
+        }
+
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

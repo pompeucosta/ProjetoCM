@@ -131,11 +131,13 @@ class MainActivity : ComponentActivity() {
                             composable(Screen.PresetRuns.route) {
                                 SavedRuns(onAddBtnClick = { navController.navigate("${Screen.CreateRunPreset.route}/-1")},
                                     onEditClick = {id -> navController.navigate("createPreset/$id")},
-                                    onPresetClick = {id -> navController.navigate(Screen.RunInProgress.route)})
+                                    onPresetClick = {id -> navController.navigate("${Screen.RunInProgress.route}/$id")})
                                 topBarTitle = Screen.PresetRuns.title
                                 canNavigateBack = Screen.PresetRuns.canNavigateBack
                             }
-                            composable(Screen.RunInProgress.route) {
+                            composable("${Screen.RunInProgress.route}/{id}",
+                                arguments= listOf(navArgument("id") {type= NavType.IntType})
+                            ) {
                                 SessionInProgress(onNavigateToCamera = { navController.navigate(Screen.CameraPreview.route) })
                                 topBarTitle = Screen.RunInProgress.title
                                 canNavigateBack = Screen.RunInProgress.canNavigateBack
