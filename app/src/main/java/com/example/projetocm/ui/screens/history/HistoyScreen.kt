@@ -1,5 +1,6 @@
 package com.example.projetocm.ui.screens.history
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,6 +29,7 @@ import com.example.projetocm.ui.theme.ProjetoCMTheme
 @Composable
 fun History(
     modifier: Modifier = Modifier,
+    onSessionClick: (Int) -> Unit = {},
     viewModel: HistoryViewModel = viewModel(factory= AppViewModelProvider.Factory)
 ) {
     val sessions by viewModel.savedSessionsUIState.collectAsState()
@@ -39,7 +41,11 @@ fun History(
     else {
         LazyColumn(modifier= modifier) {
             items(sessionList) { session ->
-                SessionItem(session = session.toUIInfo())
+                SessionItem(
+                    session = session.toUIInfo(),
+                    modifier= Modifier
+                        .clickable{onSessionClick(session.id)}
+                )
             }
         }
     }

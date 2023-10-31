@@ -9,6 +9,7 @@ import com.example.projetocm.MainApplication
 import com.example.projetocm.ui.screens.history.HistoryViewModel
 import com.example.projetocm.ui.screens.savedRuns.CreateRunViewModel
 import com.example.projetocm.ui.screens.savedRuns.SavedRunsViewModel
+import com.example.projetocm.ui.screens.session.SessionEndDetailsViewModel
 import com.example.projetocm.ui.screens.session.SessionInProgressViewModel
 
 object AppViewModelProvider{
@@ -27,6 +28,10 @@ object AppViewModelProvider{
 
         initializer {
             HistoryViewModel(mainApplication().container.sessionsRepository)
+        }
+
+        initializer {
+            SessionEndDetailsViewModel(this.createSavedStateHandle(),mainApplication().container.sessionsRepository)
         }
     }
 }

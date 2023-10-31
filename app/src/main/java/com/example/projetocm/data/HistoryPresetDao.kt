@@ -20,4 +20,7 @@ interface HistorySessionDao {
 
     @Query("SELECT * FROM HistorySessions")
     fun getAllSessions(): Flow<List<HistorySession>>
+
+    @Query("SELECT * FROM HistorySessions ORDER BY year DESC") // , month DESC, day DESC LIMIT 1
+    fun getMostRecent(): Flow<HistorySession>
 }

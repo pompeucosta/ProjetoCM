@@ -11,4 +11,6 @@ interface IHistorySessionRepository {
     fun getSessionStream(id: Int): Flow<HistorySession>
 
     fun getAllSessionsStream(): Flow<List<HistorySession>>
+
+    fun getMostRecent(): Flow<HistorySession>
 }

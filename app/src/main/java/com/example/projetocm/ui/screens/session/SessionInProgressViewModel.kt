@@ -111,7 +111,7 @@ class SessionInProgressViewModel(
         hasPermission = permission
     }
 
-    suspend fun finishSession() {
+    suspend fun finishSession(): Int {
         val sessionInfo = sessionInfoUI.toSessionInfo()
         val historySession = HistorySession(
             location= location,
@@ -121,6 +121,11 @@ class SessionInProgressViewModel(
             sessionInfo = sessionInfo
         )
         historySessionsRepository.upsertSession(historySession)
+        val session = historySessionsRepository.getMostRecent()
+            .filterNotNull()
+            .first()
+
+        return session.id
     }
 
     private fun pause() {

@@ -13,4 +13,6 @@ class HistorySessionsRepository(private val historySessionDao: HistorySessionDao
     override fun getSessionStream(id: Int): Flow<HistorySession> = historySessionDao.getSession(id)
 
     override suspend fun upsertSession(session: HistorySession) = historySessionDao.upsertSession(session)
+
+    override fun getMostRecent() = historySessionDao.getMostRecent()
 }

@@ -3,10 +3,8 @@ package com.example.projetocm.ui.screens.session
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,7 +36,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projetocm.R
 import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.theme.ProjetoCMTheme
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
@@ -48,6 +45,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SessionInProgress(
     onNavigateToCamera: () -> Unit,
+    onSessionEnd: (Int) -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: SessionInProgressViewModel = viewModel(factory= AppViewModelProvider.Factory)
 ) {
@@ -58,7 +56,11 @@ fun SessionInProgress(
     ) {
 
         val coroutineScope = rememberCoroutineScope()
-        val launcher = rememberLauncherForActivityResult(
+
+        //meter aqui o pedido de permissao da localizacao
+        //se recusar voltar pa tras
+
+        val notificationPermissionLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission(),
             onResult = {isGranted ->
                 viewModel.updatePermission(isGranted)
@@ -68,7 +70,7 @@ fun SessionInProgress(
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val context = LocalContext.current
 
-            LaunchedEffect(launcher) {
+            LaunchedEffect(notificationPermissionLauncher) {
                 when(PackageManager.PERMISSION_GRANTED) {
                     ContextCompat.checkSelfPermission(
                         context,
@@ -77,7 +79,7 @@ fun SessionInProgress(
                         viewModel.updatePermission(true)
                     }
                     else -> {
-                        launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                 }
             }
@@ -140,8 +142,9 @@ fun SessionInProgress(
                 Button(
                     onClick = {
                               coroutineScope.launch {
-                                  viewModel.finishSession()
+                                  val id = viewModel.finishSession()
                                   //mandar para a pagina de final de sessao
+                                  onSessionEnd(id)
                               }
                     },
                     modifier = Modifier
