@@ -57,7 +57,7 @@ fun SessionInfoUI.toSessionInfo(): SessionInfo {
 
 class SessionInProgressViewModel(
     savedStateHandle: SavedStateHandle,
-    private val appContext: Context,
+    private val sendNotification: (String) -> Unit,
     private val historySessionsRepository: HistorySessionsRepository,
     private val runsRepository: RunPresetsRepository
 ) : ViewModel() {
@@ -152,16 +152,5 @@ class SessionInProgressViewModel(
         }
 
         sessionInfoUI = sessionInfoUI.copy(sessionInfoDetails = sessionInfoUI.sessionInfoDetails.copy(time= String.format("%02d:%02d:%02d", hours, minutes, seconds)))
-    }
-
-    private fun sendNotification(message: String) {
-        val notification = NotificationCompat.Builder(appContext,"session_channel")
-            .setContentText(message)
-            .setContentTitle("Session goal")
-            .setSmallIcon(R.drawable.ic_launcher_background)
-            .build()
-
-        val notificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(1,notification)
     }
 }

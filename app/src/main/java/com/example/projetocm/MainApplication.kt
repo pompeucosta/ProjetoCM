@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import androidx.core.app.NotificationCompat
 import com.example.projetocm.data.AppContainer
 import com.example.projetocm.data.AppDataContainer
 import org.koin.android.ext.koin.androidContext
@@ -13,12 +14,10 @@ import org.koin.ksp.generated.defaultModule
 
 class MainApplication: Application() {
     lateinit var container: AppContainer
-    lateinit var appContext: Context
 
     override fun onCreate() {
         super.onCreate()
         container = AppDataContainer(this)
-        appContext = this
 
         startKoin {
             androidLogger()
@@ -34,5 +33,16 @@ class MainApplication: Application() {
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
+    }
+
+    fun sendNotification(message: String) {
+        val notification = NotificationCompat.Builder(this,"session_channel")
+            .setContentText(message)
+            .setContentTitle("Session goal")
+            .setSmallIcon(R.drawable.ic_launcher_background)
+            .build()
+
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(1,notification)
     }
 }
