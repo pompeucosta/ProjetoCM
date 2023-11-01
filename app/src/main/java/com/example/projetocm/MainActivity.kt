@@ -1,6 +1,8 @@
 package com.example.projetocm
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Row
@@ -33,11 +35,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.findNavController
 import androidx.navigation.navArgument
+import com.example.projetocm.services.RunningService
+import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.screens.history.History
 import com.example.projetocm.ui.screens.savedRuns.SavedRuns
 import com.example.projetocm.ui.screens.session.SessionInProgress
@@ -45,6 +53,7 @@ import com.example.projetocm.ui.screens.camera.MainCameraScreen
 import com.example.projetocm.ui.screens.home.Home
 import com.example.projetocm.ui.screens.savedRuns.CreateRun
 import com.example.projetocm.ui.screens.session.SessionEndDetails
+import com.example.projetocm.ui.screens.session.SessionInProgressViewModel
 import com.example.projetocm.ui.theme.ProjetoCMTheme
 
 sealed class Screen(
@@ -54,7 +63,7 @@ sealed class Screen(
     val unselectedIcon: ImageVector,
     val canNavigateBack: Boolean = false
 ) {
-    data object History: Screen("History","history",Icons.Filled.Home,Icons.Outlined.Home)
+    data object History: Screen("History","history",Icons.Filled.List,Icons.Outlined.List)
     data object PresetRuns: Screen("Runs","presetRuns",Icons.Filled.List,Icons.Outlined.List)
     data object RunInProgress: Screen("Run In Progress","runInProgress",Icons.Filled.List,Icons.Outlined.List)
     data object CameraPreview: Screen("Run In Progress","cameraPreview",Icons.Filled.List,Icons.Outlined.List)
@@ -63,6 +72,8 @@ sealed class Screen(
     data object Home: Screen("Welcome","home",Icons.Filled.Home,Icons.Outlined.Home)
 }
 class MainActivity : ComponentActivity() {
+
+    private lateinit var navController: NavHostController
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,9 +99,10 @@ class MainActivity : ComponentActivity() {
 
                 var lastScreen: Screen = Screen.History
 
+
                 //https://developer.android.com/jetpack/compose/navigation#bottom-nav
-                val navController = rememberNavController()
-                // A surface container using the 'background' color from the theme
+                navController = rememberNavController()
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -143,13 +155,15 @@ class MainActivity : ComponentActivity() {
                             composable(Screen.PresetRuns.route) {
                                 SavedRuns(onAddBtnClick = { navController.navigate("${Screen.CreateRunPreset.route}/-1")},
                                     onEditClick = {id -> navController.navigate("createPreset/$id")},
-                                    onPresetClick = {id -> navController.navigate("${Screen.RunInProgress.route}/$id")})
+                                    onPresetClick = {id ->
+                                        val app = application as MainApplication
+                                        app.changeRunId(id)
+                                        navController.navigate(Screen.RunInProgress.route)})
                                 topBarTitle = Screen.PresetRuns.title
                                 canNavigateBack = Screen.PresetRuns.canNavigateBack
                                 lastScreen = Screen.PresetRuns
                             }
-                            composable("${Screen.RunInProgress.route}/{id}",
-                                arguments= listOf(navArgument("id") {type= NavType.IntType})
+                            composable(Screen.RunInProgress.route
                             ) {
                                 SessionInProgress(
                                     onNavigateToCamera = { navController.navigate(Screen.CameraPreview.route) },
@@ -189,9 +203,26 @@ class MainActivity : ComponentActivity() {
                                 selectedItemIndex = -1
                             }
                         }
+
+                        if(intent != null) {
+                            Log.d("t",intent.action ?: "null")
+                        }
+
+                        if(intent?.action == RunningService.Actions.Show.toString()) {
+                            Log.d("t","navigating")
+                            navController.navigate(Screen.RunInProgress.route)
+                        }
                     }
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        Log.d("t","new intent")
+        super.onNewIntent(intent)
+        if(intent?.action == RunningService.Actions.Show.toString()) {
+            navController.navigate(Screen.RunInProgress.route)
         }
     }
 }
@@ -223,4 +254,10 @@ fun TopAppBar(
         },
         modifier = modifier
     )
+}
+
+private fun navigateToSessionIfNeeded(intent: Intent?) {
+    if(intent?.action == RunningService.Actions.Show.toString()) {
+
+    }
 }

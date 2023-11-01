@@ -45,8 +45,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun SessionInProgress(
     onNavigateToCamera: () -> Unit,
-    onSessionEnd: (Int) -> Unit = {},
     modifier: Modifier = Modifier,
+    onSessionEnd: (Int) -> Unit = {},
     viewModel: SessionInProgressViewModel = viewModel(factory= AppViewModelProvider.Factory)
 ) {
     Column(
@@ -88,6 +88,7 @@ fun SessionInProgress(
             viewModel.updatePermission(true)
         }
 
+        viewModel.startTimer()
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

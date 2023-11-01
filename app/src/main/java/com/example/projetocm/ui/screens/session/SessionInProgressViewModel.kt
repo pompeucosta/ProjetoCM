@@ -1,17 +1,14 @@
 package com.example.projetocm.ui.screens.session
 
-import android.app.NotificationManager
-import android.content.Context
 import android.os.CountDownTimer
 import android.os.SystemClock
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.core.app.NotificationCompat
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.projetocm.R
 import com.example.projetocm.data.HistorySession
 import com.example.projetocm.data.RunPreset
 import com.example.projetocm.data.SessionInfo
@@ -56,7 +53,9 @@ fun SessionInfoUI.toSessionInfo(): SessionInfo {
 }
 
 class SessionInProgressViewModel(
-    savedStateHandle: SavedStateHandle,
+    private val setForegroundService: (String) -> Unit,
+    private val stopForegroundService: () -> Unit,
+    private val updateForegroundMessage: (String) -> Unit,
     private val sendNotification: (String) -> Unit,
     private val historySessionsRepository: HistorySessionsRepository,
     private val runsRepository: RunPresetsRepository
@@ -64,7 +63,7 @@ class SessionInProgressViewModel(
     var sessionInfoUI by mutableStateOf(SessionInfoUI())
         private set
 
-    private val runId = savedStateHandle["id"] ?: -1
+    private var runId = -1
     private var goalRun: RunPreset = RunPreset("",0,0,false)
     //private val coordinates: List<String> = emptyList() //lista de coordenadas da localizacao (trocar de string para o tipo certo)
 
@@ -75,6 +74,11 @@ class SessionInProgressViewModel(
     private var timeWarned = false
     private var hasPermission = false
     private var distanceWarned = false
+    private var timerStarted = false
+    private var time: Long = 0
+    private var elapsedTime: Long = 0
+    private var foregroundServiceLaunched = false
+
 
     private val timer: CountDownTimer = object : CountDownTimer(Long.MAX_VALUE,1000) {
         override fun onTick(millisUntilFinished: Long) {
@@ -84,66 +88,105 @@ class SessionInProgressViewModel(
         override fun onFinish() { }
     }
 
-    init {
-        if(runId >= 0) {
-            viewModelScope.launch {
-                goalRun = runsRepository.getPresetStream(runId)
-                    .filterNotNull()
-                    .first()
-                startTimer()
-            }
-        }
-    }
-
-    private fun startTimer() {
-        startTime = SystemClock.elapsedRealtime()
-        timer.start()
-    }
-
     fun pauseUnpauseClick() {
-        if(sessionInfoUI.paused)
-            unpause()
-        else
-            pause()
+        if(runId > 0) {
+            if (sessionInfoUI.paused)
+                unpause()
+            else
+                pause()
+        }
     }
 
     fun updatePermission(permission: Boolean) {
         hasPermission = permission
     }
 
-    suspend fun finishSession(): Int {
-        val sessionInfo = sessionInfoUI.toSessionInfo()
-        val historySession = HistorySession(
-            location= location,
-            day= today.dayOfMonth,
-            month= today.monthValue,
-            year= today.year,
-            sessionInfo = sessionInfo
-        )
-        historySessionsRepository.upsertSession(historySession)
-        val session = historySessionsRepository.getMostRecent()
-            .filterNotNull()
-            .first()
+    fun startTimer() {
+        if(!timerStarted && runId > 0) {
+            timerStarted = true
+            startTime = SystemClock.elapsedRealtime()
+            timer.start()
+        }
 
-        return session.id
+        if(hasPermission && !foregroundServiceLaunched && runId > 0){
+            setForegroundService("test")
+            Log.d("t","started service")
+            foregroundServiceLaunched = true
+        }
+
+
+    }
+
+    fun changeRunId(_runId: Int) {
+        if(runId > 0) {
+            reset()
+        }
+
+        runId = _runId
+        if(runId > 0) {
+            viewModelScope.launch {
+                goalRun = runsRepository.getPresetStream(runId)
+                    .filterNotNull()
+                    .first()
+            }
+        }
+    }
+
+    private fun reset() {
+        runId = -1
+        timerStarted = false
+        if(sessionInfoUI.paused) {
+            timer.cancel()
+        }
+        sessionInfoUI = SessionInfoUI()
+        if(foregroundServiceLaunched) {
+            stopForegroundService()
+            foregroundServiceLaunched = false
+        }
+    }
+
+    suspend fun finishSession(): Int {
+        if(runId > 0) {
+            val sessionInfo = sessionInfoUI.toSessionInfo()
+            val historySession = HistorySession(
+                location = location,
+                day = today.dayOfMonth,
+                month = today.monthValue,
+                year = today.year,
+                sessionInfo = sessionInfo
+            )
+            historySessionsRepository.upsertSession(historySession)
+            val session = historySessionsRepository.getMostRecent()
+                .filterNotNull()
+                .first()
+
+            reset()
+            return session.id
+        }
+
+        return -1
     }
 
     private fun pause() {
         sessionInfoUI = sessionInfoUI.copy(paused = true)
         timer.cancel()
+        time = elapsedTime
     }
 
     private fun unpause() {
-        sessionInfoUI = sessionInfoUI.copy(paused= false)
-        startTimer()
+        sessionInfoUI = sessionInfoUI.copy(paused = false)
+        startTime = SystemClock.elapsedRealtime()
+        timer.start()
     }
 
     private fun updateElapsedTime() {
         val currentTime = SystemClock.elapsedRealtime()
-        val elapsedTime = (currentTime - startTime) / 1000 //total seconds since start
+        elapsedTime = ((currentTime - startTime) / 1000) + time //total seconds since start
         val hours = elapsedTime / 3600
         val minutes = (elapsedTime % 3600) / 60
         val seconds = elapsedTime % 60
+
+        sessionInfoUI = sessionInfoUI.copy(sessionInfoDetails = sessionInfoUI.sessionInfoDetails.copy(time= String.format("%02d:%02d:%02d", hours, minutes, seconds)))
 
         if(hasPermission && !timeWarned && elapsedTime >= goalRun.seconds) {
             //send notification
@@ -151,11 +194,18 @@ class SessionInProgressViewModel(
             timeWarned = true
         }
 
-        if(hasPermission && !distanceWarned && (sessionInfoUI.sessionInfoDetails.distance.toIntOrNull() ?: 0) >= goalRun.km) {
-            sendNotification("You have completed your distance goal!!")
-            distanceWarned = true
-        }
+        updateNotification()
 
-        sessionInfoUI = sessionInfoUI.copy(sessionInfoDetails = sessionInfoUI.sessionInfoDetails.copy(time= String.format("%02d:%02d:%02d", hours, minutes, seconds)))
+    }
+
+    private fun updateNotification() {
+        if(hasPermission && foregroundServiceLaunched) {
+            updateForegroundMessage(sessionInfoUI.sessionInfoDetails.time)
+
+            if(!distanceWarned && (sessionInfoUI.sessionInfoDetails.distance.toIntOrNull() ?: 0) >= goalRun.km) {
+                sendNotification("You have completed your distance goal!!")
+                distanceWarned = true
+            }
+        }
     }
 }

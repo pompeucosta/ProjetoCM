@@ -1,11 +1,13 @@
 package com.example.projetocm.ui
 
+import android.content.Intent
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.projetocm.MainApplication
+import com.example.projetocm.services.RunningService
 import com.example.projetocm.ui.screens.history.HistoryViewModel
 import com.example.projetocm.ui.screens.home.HomeViewModel
 import com.example.projetocm.ui.screens.savedRuns.CreateRunViewModel
@@ -24,7 +26,7 @@ object AppViewModelProvider{
         }
 
         initializer {
-            SessionInProgressViewModel(this.createSavedStateHandle(),{message -> mainApplication().sendNotification(message)},mainApplication().container.sessionsRepository,mainApplication().container.presetsRepository)
+            mainApplication().sessionInProgressViewModel
         }
 
         initializer {
