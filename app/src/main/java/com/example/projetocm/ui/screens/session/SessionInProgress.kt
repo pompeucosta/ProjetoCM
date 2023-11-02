@@ -2,6 +2,7 @@ package com.example.projetocm.ui.screens.session
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,17 +37,26 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projetocm.R
 import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.theme.ProjetoCMTheme
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.Priority
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Polyline
+import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
+
+
 
 @Composable
 fun SessionInProgress(
     onNavigateToCamera: () -> Unit,
     modifier: Modifier = Modifier,
     onSessionEnd: (Int) -> Unit = {},
+    locationClient: FusedLocationProviderClient,
     viewModel: SessionInProgressViewModel = viewModel(factory= AppViewModelProvider.Factory)
 ) {
     Column(
@@ -57,13 +67,39 @@ fun SessionInProgress(
 
         val coroutineScope = rememberCoroutineScope()
 
-        //meter aqui o pedido de permissao da localizacao
-        //se recusar voltar pa tras
+        val locationPermissionLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = {isGranted ->
+                viewModel.updateLocationPermission(isGranted)
+            }
+        )
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val context = LocalContext.current
+
+            LaunchedEffect(locationPermissionLauncher) {
+                when(PackageManager.PERMISSION_GRANTED) {
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ) -> {
+                        viewModel.updateLocationPermission(true)
+                    }
+                    else -> {
+                        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    }
+                }
+            }
+        }
+        else {
+            viewModel.updateLocationPermission(true)
+        }
 
         val notificationPermissionLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission(),
             onResult = {isGranted ->
                 viewModel.updatePermission(isGranted)
+
             }
         )
 
@@ -78,15 +114,25 @@ fun SessionInProgress(
                     ) -> {
                         viewModel.updatePermission(true)
                     }
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ) -> {
+                        viewModel.updatePermission(true)
+                    }
                     else -> {
                         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
+
                 }
+
             }
+
         }
         else {
             viewModel.updatePermission(true)
         }
+
 
         viewModel.startTimer()
 
@@ -97,16 +143,40 @@ fun SessionInProgress(
         ) {
             var uiSettings by remember { mutableStateOf(MapUiSettings(
                 compassEnabled = false,
-                //zoomControlsEnabled = false
+                zoomControlsEnabled = false
             )) }
             var mapProperties by remember {mutableStateOf(MapProperties(mapType = MapType.NORMAL))}
 
-            /*GoogleMap(
+            val baseZoom = 16f
+            var currentPosition = LatLng(40.63319811102272, -8.65936701396476)
+            val cameraPositionState = rememberCameraPositionState {
+                position = CameraPosition.fromLatLngZoom(currentPosition, baseZoom)
+            }
+            if(viewModel.hasLocationPermission()){
+                locationClient.lastLocation
+                    .addOnSuccessListener { location : Location? ->
+                        if(location != null){
+                            currentPosition = LatLng(location.latitude,location.longitude)
+                            viewModel.addPathPoint(currentPosition)
+                        }else{
+                            currentPosition = LatLng(2.2,2.2)
+
+                        }
+                        cameraPositionState.position = CameraPosition.fromLatLngZoom(viewModel.getLastPosition(), baseZoom)
+                    }
+                viewModel.setLocationGetter({ locationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY,null) })
+
+            }
+
+            GoogleMap(
                 properties = mapProperties,
                 uiSettings= uiSettings,
                 modifier = Modifier
-                    .padding(10.dp)
-            )*/
+                    .padding(10.dp),
+                cameraPositionState = cameraPositionState
+            ){
+                Polyline(points = viewModel.getPoints())
+            }
         }
 
         Column(
@@ -291,7 +361,7 @@ fun InfoRow(
         }
     }
 }
-
+/*
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
@@ -312,4 +382,4 @@ fun SessionInProgressPreviewDark(){
             SessionInProgress(onNavigateToCamera = {},modifier = Modifier.padding(it))
         }
     }
-}
+}*/

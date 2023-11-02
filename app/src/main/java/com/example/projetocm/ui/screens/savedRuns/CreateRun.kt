@@ -123,7 +123,7 @@ fun Name(
             value = presetDetails.name,
             onValueChange = { onValueChange(presetDetails.copy(name = it)) },
             keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Number, imeAction = ImeAction.Done)
+                keyboardType = KeyboardType.Text, imeAction = ImeAction.Done)
         )
     }
 }

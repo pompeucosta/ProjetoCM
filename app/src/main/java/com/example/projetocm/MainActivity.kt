@@ -1,5 +1,6 @@
 package com.example.projetocm
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -55,6 +56,9 @@ import com.example.projetocm.ui.screens.savedRuns.CreateRun
 import com.example.projetocm.ui.screens.session.SessionEndDetails
 import com.example.projetocm.ui.screens.session.SessionInProgressViewModel
 import com.example.projetocm.ui.theme.ProjetoCMTheme
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 
 sealed class Screen(
     val title: String,
@@ -74,9 +78,13 @@ sealed class Screen(
 class MainActivity : ComponentActivity() {
 
     private lateinit var navController: NavHostController
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
+    @SuppressLint("MissingPermission")
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         setContent {
             ProjetoCMTheme {
                 val items = listOf(
@@ -170,7 +178,8 @@ class MainActivity : ComponentActivity() {
                                     onSessionEnd = {id ->
                                         navController.navigate("${Screen.SessionEnd.route}/$id")
                                         canNavigateBack = false
-                                    }
+                                    },
+                                    locationClient = fusedLocationClient
                                 )
                                 topBarTitle = Screen.RunInProgress.title
                                 canNavigateBack = Screen.RunInProgress.canNavigateBack

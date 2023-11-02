@@ -1,5 +1,6 @@
 package com.example.projetocm.ui.screens.session
 
+import android.location.Location
 import android.os.CountDownTimer
 import android.os.SystemClock
 import android.util.Log
@@ -10,10 +11,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projetocm.data.HistorySession
+import com.example.projetocm.data.PathPoint
 import com.example.projetocm.data.RunPreset
 import com.example.projetocm.data.SessionInfo
 import com.example.projetocm.data.repositories.HistorySessionsRepository
 import com.example.projetocm.data.repositories.RunPresetsRepository
+import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -65,7 +68,7 @@ class SessionInProgressViewModel(
 
     private var runId = -1
     private var goalRun: RunPreset = RunPreset("",0,0,false)
-    //private val coordinates: List<String> = emptyList() //lista de coordenadas da localizacao (trocar de string para o tipo certo)
+    private val coordinates: MutableList<PathPoint> = mutableListOf() //lista de coordenadas da localizacao (trocar de string para o tipo certo)
 
     private var startTime: Long = 0
     private var location = "" //localizacao tipo Aveiro ou Porto
@@ -73,6 +76,11 @@ class SessionInProgressViewModel(
 
     private var timeWarned = false
     private var hasPermission = false
+    private var hasLocationPermission = false
+    private var getCurrentLocation: () -> Unit = {}
+    private val timeBetweenLocationUpdates = 20L //em segundos
+    private var timeOfLastLocationUpdate = 0L
+    private var totalDistance = 0.0
     private var distanceWarned = false
     private var timerStarted = false
     private var time: Long = 0
@@ -83,6 +91,8 @@ class SessionInProgressViewModel(
     private val timer: CountDownTimer = object : CountDownTimer(Long.MAX_VALUE,1000) {
         override fun onTick(millisUntilFinished: Long) {
             updateElapsedTime()
+            updateDistance()
+            Log.d("Coordinates","Distance: ${totalDistance} m, ${coordinates.toString()}")
         }
 
         override fun onFinish() { }
@@ -99,6 +109,51 @@ class SessionInProgressViewModel(
 
     fun updatePermission(permission: Boolean) {
         hasPermission = permission
+    }
+
+    fun updateLocationPermission(permission: Boolean) {
+        hasLocationPermission = permission
+    }
+
+    fun hasLocationPermission(): Boolean{
+        return hasLocationPermission
+    }
+
+    fun setLocationGetter(getLocation:() -> Unit){
+        getCurrentLocation = getLocation
+    }
+
+    fun addPathPoint(latlng: LatLng){
+        var results : FloatArray = floatArrayOf(0f)
+        if(coordinates.size > 0) {
+            Location.distanceBetween(
+                coordinates.last().getLatLng().latitude,
+                coordinates.last().getLatLng().longitude,
+                latlng.latitude,
+                latlng.longitude,
+                results
+            )
+        }
+        totalDistance += results[0]
+        coordinates.add(PathPoint(latlng,null,SystemClock.elapsedRealtime()))
+    }
+
+    fun updateDistance(){
+        sessionInfoUI = sessionInfoUI.copy(sessionInfoDetails = sessionInfoUI.sessionInfoDetails.copy(distance = String.format("%.3f",(totalDistance/1000)) ))
+    }
+
+    fun getCoordinates(): MutableList<PathPoint> {
+        return coordinates
+    }
+
+    fun getPoints(): List<LatLng>{
+        val points: MutableList<LatLng> = mutableListOf()
+        coordinates.forEach{points.add(it.getLatLng())}
+        return points
+    }
+
+    fun getLastPosition(): LatLng{
+        return coordinates.last().getLatLng()
     }
 
     fun startTimer() {
