@@ -79,7 +79,7 @@ fun SessionInProgress(
             }
         )
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && viewModel.hasLocationPermission()) {
             val context = LocalContext.current
 
             LaunchedEffect(locationPermissionLauncher) {
@@ -108,7 +108,7 @@ fun SessionInProgress(
             }
         )
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && viewModel.hasNotificationPermission()) {
             val context = LocalContext.current
 
             LaunchedEffect(notificationPermissionLauncher) {

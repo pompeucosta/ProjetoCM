@@ -37,7 +37,6 @@
         </activity>
 
         <service android:name=".services.RunningService" android:foregroundServiceType="specialUse" />
-        <service android:name=".services.TrackingService" android:foregroundServiceType="location" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
