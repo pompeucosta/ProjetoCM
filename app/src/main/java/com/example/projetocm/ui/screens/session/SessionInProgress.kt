@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -39,12 +41,15 @@ import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.theme.ProjetoCMTheme
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Priority
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
@@ -164,7 +169,7 @@ fun SessionInProgress(
                         }
                         cameraPositionState.position = CameraPosition.fromLatLngZoom(viewModel.getLastPosition(), baseZoom)
                     }
-                viewModel.setLocationGetter({ locationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY,null) })
+                viewModel.setLocationGetter{ locationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY,null) }
 
             }
 
@@ -176,6 +181,16 @@ fun SessionInProgress(
                 cameraPositionState = cameraPositionState
             ){
                 Polyline(points = viewModel.getPoints())
+                Marker(
+                    state= MarkerState(viewModel.getStartingPosition()),
+                    title= "Start"
+                )
+
+                Marker(
+                    state= MarkerState(viewModel.getLastPosition()),
+                    title= "Current position"
+                )
+
             }
         }
 

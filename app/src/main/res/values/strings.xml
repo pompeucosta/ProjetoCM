@@ -15,7 +15,7 @@
     <string name="steps_taken">Steps taken:</string>
     <string name="average_speed">Average speed:</string>
     <string name="calories_burned">Calories burned:</string>
-    <string name="cal">cal</string>
+    <string name="cal">kcal</string>
     <string name="pause">Pause</string>
     <string name="r_continue">Continue</string>
     <string name="finish">Finish</string>

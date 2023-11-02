@@ -13,4 +13,8 @@ class PathPoint(latlng: LatLng, img: String?, time: Long) {
     fun setLatLng(latlng: LatLng){
         latLng = latlng
     }
+
+    fun getTime(): Long{
+        return timeReached
+    }
 }

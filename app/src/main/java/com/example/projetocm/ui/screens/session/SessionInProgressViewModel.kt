@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import kotlin.math.abs
 
 data class SessionInfoUI(
     val sessionInfoDetails: SessionInfoDetails = SessionInfoDetails(),
@@ -78,9 +79,12 @@ class SessionInProgressViewModel(
     private var hasPermission = false
     private var hasLocationPermission = false
     private var getCurrentLocation: () -> Unit = {}
-    private val timeBetweenLocationUpdates = 20L //em segundos
+    private val timeBetweenLocationUpdates = 5L //em segundos
     private var timeOfLastLocationUpdate = 0L
     private var totalDistance = 0.0
+    private var averageSpeed = 0.0
+    private var topSpeed = 0.0
+    private var calories = 0.0
     private var distanceWarned = false
     private var timerStarted = false
     private var time: Long = 0
@@ -92,7 +96,11 @@ class SessionInProgressViewModel(
         override fun onTick(millisUntilFinished: Long) {
             updateElapsedTime()
             updateDistance()
-            Log.d("Coordinates","Distance: ${totalDistance} m, ${coordinates.toString()}")
+            updateAverageSpeed()
+            updateTopSpeed()
+            updateCalories()
+            requestPositionUpdate()
+            Log.d("Coordinates","Distance: ${totalDistance} m, ${coordinates.size}")
         }
 
         override fun onFinish() { }
@@ -119,13 +127,18 @@ class SessionInProgressViewModel(
         return hasLocationPermission
     }
 
+    fun hasNotificationPermission(): Boolean{
+        return hasPermission
+    }
+
     fun setLocationGetter(getLocation:() -> Unit){
         getCurrentLocation = getLocation
     }
 
     fun addPathPoint(latlng: LatLng){
-        var results : FloatArray = floatArrayOf(0f)
-        if(coordinates.size > 0) {
+        if(coordinates.size > 0){
+
+            var results : FloatArray = floatArrayOf(0f)
             Location.distanceBetween(
                 coordinates.last().getLatLng().latitude,
                 coordinates.last().getLatLng().longitude,
@@ -133,18 +146,59 @@ class SessionInProgressViewModel(
                 latlng.longitude,
                 results
             )
+            totalDistance += results[0]
+
+            var sectionSpeed = 0.0
+            val sectionTime = SystemClock.elapsedRealtime() - coordinates.last().getTime()
+            if(results[0] > 0){
+                sectionSpeed = (results[0].toDouble()/1000)/(sectionTime.toDouble()/3600)
+                if(sectionSpeed > topSpeed){
+                    topSpeed = sectionSpeed
+                }
+
+                coordinates.add(PathPoint(latlng,null,SystemClock.elapsedRealtime()))
+            }
+
+
+        }else{
+            coordinates.add(PathPoint(latlng,null,SystemClock.elapsedRealtime()))
         }
-        totalDistance += results[0]
-        coordinates.add(PathPoint(latlng,null,SystemClock.elapsedRealtime()))
     }
 
     fun updateDistance(){
         sessionInfoUI = sessionInfoUI.copy(sessionInfoDetails = sessionInfoUI.sessionInfoDetails.copy(distance = String.format("%.3f",(totalDistance/1000)) ))
     }
 
+    fun updateAverageSpeed(){
+        if(totalDistance != 0.0 && elapsedTime != 0L){
+            averageSpeed = (totalDistance/1000)/(elapsedTime.toDouble()/3600)
+        }
+        sessionInfoUI = sessionInfoUI.copy(sessionInfoDetails = sessionInfoUI.sessionInfoDetails.copy(averageSpeed = String.format("%.2f",averageSpeed)))
+    }
+
+    fun updateTopSpeed(){
+        sessionInfoUI = sessionInfoUI.copy(sessionInfoDetails = sessionInfoUI.sessionInfoDetails.copy(topSpeed = String.format("%.2f",topSpeed) ))
+    }
+
+    fun updateCalories(){
+        val met = abs(1.350325 * averageSpeed - 3.4510092)
+        if(averageSpeed > 0.0){
+            calories = elapsedTime * met * 3.5 * 77 / (200 * 60)
+        }
+        sessionInfoUI = sessionInfoUI.copy(sessionInfoDetails = sessionInfoUI.sessionInfoDetails.copy(calories = String.format("%.3f",calories/1000) ))
+    }
+
     fun getCoordinates(): MutableList<PathPoint> {
         return coordinates
     }
+
+    fun getStartingPosition(): LatLng{
+        if(coordinates.size > 0){
+            return coordinates.first().getLatLng()
+        }
+        return LatLng(0.0,0.0)
+    }
+
 
     fun getPoints(): List<LatLng>{
         val points: MutableList<LatLng> = mutableListOf()
@@ -153,7 +207,18 @@ class SessionInProgressViewModel(
     }
 
     fun getLastPosition(): LatLng{
-        return coordinates.last().getLatLng()
+        if(coordinates.size > 0){
+            return coordinates.last().getLatLng()
+        }
+        return LatLng(0.0,0.0)
+    }
+
+    fun requestPositionUpdate(){
+        val currentTime = SystemClock.elapsedRealtime()
+        if(currentTime - timeOfLastLocationUpdate > timeBetweenLocationUpdates){
+            timeOfLastLocationUpdate = SystemClock.elapsedRealtime()
+            getCurrentLocation()
+        }
     }
 
     fun startTimer() {
