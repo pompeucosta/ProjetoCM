@@ -2,9 +2,9 @@ package com.example.projetocm.data
 
 import com.google.android.gms.maps.model.LatLng
 
-class PathPoint(latlng: LatLng, img: String?, time: Long) {
+class PathPoint(latlng: LatLng, img: String, time: Long) {
     private var latLng: LatLng = latlng
-    private var image = img
+    private var image = img //" " if there's no image
     private var timeReached = time
 
     fun getLatLng(): LatLng {
@@ -16,5 +16,9 @@ class PathPoint(latlng: LatLng, img: String?, time: Long) {
 
     fun getTime(): Long{
         return timeReached
+    }
+
+    fun getImagePath(): String{
+        return image
     }
 }

@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.TypeConverter
 import com.example.projetocm.data.HistorySession
 import com.example.projetocm.data.PathPoint
 import com.example.projetocm.data.RunPreset
@@ -34,14 +35,16 @@ data class SessionInfoDetails(
     val topSpeed: String = "0",
     val stepsTaken : String = "0",
     val averageSpeed: String = "0",
-    val calories: String = "0"
+    val calories: String = "0",
+    val coordinates: List<PathPoint> = emptyList()
 )
 
 fun SessionInfo.toUIDetails(): SessionInfoDetails {
     val hours = seconds / 3600
     val minutes = (seconds % 3600) / 60
     val seconds = seconds % 60
-    return SessionInfoDetails("$hours:$minutes:$seconds",distance.toString(),topSpeed.toString(),stepsTaken.toString(),averageSpeed.toString(),calories.toString())
+    Log.d("History session info to ui","${coordinates}")
+    return SessionInfoDetails("$hours:$minutes:$seconds",distance.toString(),topSpeed.toString(),stepsTaken.toString(),averageSpeed.toString(),calories.toString(),coordinates= coordinates)
 }
 
 fun SessionInfoUI.toSessionInfo(): SessionInfo {
@@ -53,7 +56,7 @@ fun SessionInfoUI.toSessionInfo(): SessionInfo {
     val totalSeconds = hours * 3600 + minutes * 60 + seconds
 
     return SessionInfo(seconds= totalSeconds,distance= sessionInfoDetails.distance.toFloatOrNull() ?: 0f, topSpeed = sessionInfoDetails.topSpeed.toFloatOrNull() ?: 0f, stepsTaken = sessionInfoDetails.stepsTaken.toIntOrNull() ?: 0
-    , averageSpeed = sessionInfoDetails.averageSpeed.toFloatOrNull() ?: 0f, calories = sessionInfoDetails.calories.toIntOrNull() ?: 0)
+    , averageSpeed = sessionInfoDetails.averageSpeed.toFloatOrNull() ?: 0f, calories = sessionInfoDetails.calories.toIntOrNull() ?: 0, coordinates = sessionInfoDetails.coordinates)
 }
 
 class SessionInProgressViewModel(
@@ -69,7 +72,7 @@ class SessionInProgressViewModel(
 
     private var runId = -1
     private var goalRun: RunPreset = RunPreset("",0,0f,false)
-    private val coordinates: MutableList<PathPoint> = mutableListOf() //lista de coordenadas da localizacao (trocar de string para o tipo certo)
+    private val coordinates: MutableList<PathPoint> = mutableListOf() //lista de coordenadas da localizacao
 
     private var startTime: Long = 0
     private var location = "" //localizacao tipo Aveiro ou Porto
@@ -103,10 +106,14 @@ class SessionInProgressViewModel(
             updateCalories()
             requestPositionUpdate()
             Log.d("Coordinates","Distance: ${totalDistance} m, ${coordinates.size}")
+            Log.d("Coordinates","${getStartingPosition()}, ${getLastPosition()}")
+            Log.d("Converter","${coordinates}")
+
         }
 
         override fun onFinish() { }
     }
+
 
     fun pauseUnpauseClick() {
         if(runId > 0) {
@@ -158,13 +165,14 @@ class SessionInProgressViewModel(
                     topSpeed = sectionSpeed
                 }
 
-                coordinates.add(PathPoint(latlng,null,SystemClock.elapsedRealtime()))
+                coordinates.add(PathPoint(latlng," ",SystemClock.elapsedRealtime()))
             }
 
 
         }else{
-            coordinates.add(PathPoint(latlng,null,SystemClock.elapsedRealtime()))
+            coordinates.add(PathPoint(latlng," ",SystemClock.elapsedRealtime()))
         }
+        sessionInfoUI = sessionInfoUI.copy(sessionInfoDetails = sessionInfoUI.sessionInfoDetails.copy(coordinates = coordinates))
     }
 
     fun updateDistance(){

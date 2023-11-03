@@ -4,12 +4,14 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 
 @Database(
     entities = [RunPreset::class,HistorySession::class],
     version = 3,
     exportSchema = false
 )
+@TypeConverters(dbTypeConverters::class)
 abstract class ProjetoDatabase: RoomDatabase() {
     abstract fun runPresetDao(): RunPresetDao
     abstract fun historySessionDao(): HistorySessionDao

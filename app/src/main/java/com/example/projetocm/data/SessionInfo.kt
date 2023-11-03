@@ -7,4 +7,5 @@ data class SessionInfo(
     val stepsTaken : Int = 0,
     val averageSpeed: Float = 0f,
     val calories: Int = 0,
+    val coordinates: List<PathPoint> = emptyList()
 )
