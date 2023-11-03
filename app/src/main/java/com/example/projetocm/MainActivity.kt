@@ -149,6 +149,7 @@ class MainActivity : ComponentActivity() {
                                 topBarTitle = Screen.Home.title
                                 canNavigateBack = Screen.Home.canNavigateBack
                                 lastScreen = Screen.Home
+                                selectedItemIndex = 0
                             }
                             composable(Screen.History.route) {
                                 History(
@@ -159,6 +160,7 @@ class MainActivity : ComponentActivity() {
                                 topBarTitle = Screen.History.title
                                 canNavigateBack = Screen.History.canNavigateBack
                                 lastScreen = Screen.History
+                                selectedItemIndex = 2
                             }
                             composable(Screen.PresetRuns.route) {
                                 SavedRuns(onAddBtnClick = { navController.navigate("${Screen.CreateRunPreset.route}/-1")},
@@ -170,6 +172,7 @@ class MainActivity : ComponentActivity() {
                                 topBarTitle = Screen.PresetRuns.title
                                 canNavigateBack = Screen.PresetRuns.canNavigateBack
                                 lastScreen = Screen.PresetRuns
+                                selectedItemIndex = 1
                             }
                             composable(Screen.RunInProgress.route
                             ) {

@@ -248,32 +248,33 @@ fun SessionInProgress(
                     .height(10.dp)
             )
 
-            Button(
-                onClick = onNavigateToCamera,
-                modifier = Modifier
-                    .fillMaxWidth()
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                Text(
-                    text = stringResource(id = R.string.take_photo)
-                )
+                Button(
+                    onClick = onNavigateToCamera,
+                    modifier = Modifier
+                        .weight(1f)
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.take_photo)
+                    )
+                }
+
+                Button(
+                    onClick = {
+                        viewModel.reset()
+                        onSessionCancel()
+                    },
+                    modifier= Modifier.weight(1f)
+                ) {
+                    Text(
+                        text= stringResource(id = R.string.cancel_session)
+                    )
+                }
             }
 
-            Spacer(
-                modifier = Modifier
-                    .height(10.dp)
-            )
-            
-            Button(
-                onClick = {
-                    viewModel.reset()
-                    onSessionCancel()
-                },
-                modifier= Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text= stringResource(id = R.string.cancel_session)
-                )
-            }
         }
     }
 }

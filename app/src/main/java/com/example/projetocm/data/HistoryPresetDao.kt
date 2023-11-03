@@ -18,7 +18,7 @@ interface HistorySessionDao {
     @Query("SELECT * FROM HistorySessions WHERE id = :id")
     fun getSession(id: Int): Flow<HistorySession>
 
-    @Query("SELECT * FROM HistorySessions")
+    @Query("SELECT * FROM HistorySessions ORDER BY id DESC")
     fun getAllSessions(): Flow<List<HistorySession>>
 
     @Query("SELECT * FROM HistorySessions ORDER BY id DESC LIMIT 1")

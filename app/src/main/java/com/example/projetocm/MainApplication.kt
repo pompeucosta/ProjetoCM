@@ -67,12 +67,12 @@ class MainApplication: Application() {
 
         val channel = NotificationChannel(
             "session_channel",
-            "RunRoute Notification",
+            "RunRoute Notifications",
             NotificationManager.IMPORTANCE_DEFAULT
         )
 
         val serviceChannel = NotificationChannel(
-            "running_channel",
+            "running_foreground_channel",
             "RunRoute Notification",
             NotificationManager.IMPORTANCE_LOW
         )
@@ -88,7 +88,7 @@ class MainApplication: Application() {
         val notification = NotificationCompat.Builder(this,"session_channel")
             .setContentText(message)
             .setContentTitle("Session goal")
-            .setSmallIcon(R.drawable.ic_launcher_background)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
             .build()
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -97,7 +97,7 @@ class MainApplication: Application() {
     }
 
     private fun updateRunningServiceMessage(message: String) {
-        val notification = NotificationCompat.Builder(this,"running_channel")
+        val notification = NotificationCompat.Builder(this,"running_foreground_channel")
             .setContentText(message)
             .setContentTitle("Session goal")
             .setSmallIcon(R.drawable.ic_launcher_foreground)

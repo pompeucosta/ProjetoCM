@@ -48,7 +48,7 @@ fun RunPresetDetails.toRunPreset(): RunPreset {
     val minutes = minutes.toIntOrNull() ?: 0
     val seconds = seconds.toIntOrNull() ?: 0
 
-    return RunPreset(name,hours * 3600 + minutes * 60 + seconds,km.toInt(),twoWay,id)
+    return RunPreset(name,hours * 3600 + minutes * 60 + seconds,km.toFloat(),twoWay,id)
 }
 
 class CreateRunViewModel(
@@ -85,7 +85,7 @@ class CreateRunViewModel(
             val h = hours.toIntOrNull() ?: 0
             val min = minutes.toIntOrNull() ?: 0
             val sec = seconds.toIntOrNull() ?: 0
-            (km.toIntOrNull() ?: 0) > 0 && (h+min+sec) > 0
+            (km.toFloatOrNull() ?: 0f) > 0 && (h+min+sec) > 0
         }
     }
 }

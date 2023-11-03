@@ -23,7 +23,7 @@ data class HistorySessionUIInfo(
 )
 
 fun HistorySession.toUIInfo(): HistorySessionUIInfo {
-    val dateFormat = SimpleDateFormat("dd MMMMM yyyyy", Locale.getDefault())
+    val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
     val cal = Calendar.getInstance()
     cal.set(year,month-1,day)
     return HistorySessionUIInfo(location = location, date =  dateFormat.format(cal.time), sessionDetails = sessionInfo.toUIDetails())
