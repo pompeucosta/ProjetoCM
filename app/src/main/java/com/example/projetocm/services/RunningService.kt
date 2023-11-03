@@ -37,7 +37,7 @@ class RunningService: Service() {
     }
 
     private fun start(message: String) {
-        val notification = NotificationCompat.Builder(this,"running_channel")
+        val notification = NotificationCompat.Builder(this,"running_foreground_channel")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("Session goal")
             .setContentText(message)

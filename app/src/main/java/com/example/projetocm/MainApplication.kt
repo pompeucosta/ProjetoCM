@@ -73,7 +73,7 @@ class MainApplication: Application() {
 
         val serviceChannel = NotificationChannel(
             "running_foreground_channel",
-            "RunRoute Notification",
+            "RunRoute Notification for foreground service",
             NotificationManager.IMPORTANCE_LOW
         )
 

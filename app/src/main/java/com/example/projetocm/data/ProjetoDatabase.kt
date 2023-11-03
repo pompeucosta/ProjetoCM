@@ -8,7 +8,7 @@ import androidx.room.TypeConverters
 
 @Database(
     entities = [RunPreset::class,HistorySession::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(dbTypeConverters::class)
