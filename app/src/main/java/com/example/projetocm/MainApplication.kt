@@ -84,7 +84,7 @@ class MainApplication: Application() {
         notificationManager.createNotificationChannel(serviceChannel)
     }
 
-    fun sendNotification(message: String) {
+    private fun sendNotification(message: String) {
         val notification = NotificationCompat.Builder(this,"session_channel")
             .setContentText(message)
             .setContentTitle("Session goal")
@@ -96,7 +96,7 @@ class MainApplication: Application() {
         pushNotificationIds += 1
     }
 
-    fun updateRunningServiceMessage(message: String) {
+    private fun updateRunningServiceMessage(message: String) {
         val notification = NotificationCompat.Builder(this,"running_channel")
             .setContentText(message)
             .setContentTitle("Session goal")

@@ -61,6 +61,7 @@ fun SessionInProgress(
     onNavigateToCamera: () -> Unit,
     modifier: Modifier = Modifier,
     onSessionEnd: (Int) -> Unit = {},
+    onSessionCancel: () -> Unit = {},
     locationClient: FusedLocationProviderClient,
     viewModel: SessionInProgressViewModel = viewModel(factory= AppViewModelProvider.Factory)
 ) {
@@ -254,6 +255,23 @@ fun SessionInProgress(
             ) {
                 Text(
                     text = stringResource(id = R.string.take_photo)
+                )
+            }
+
+            Spacer(
+                modifier = Modifier
+                    .height(10.dp)
+            )
+            
+            Button(
+                onClick = {
+                    viewModel.reset()
+                    onSessionCancel()
+                },
+                modifier= Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text= stringResource(id = R.string.cancel_session)
                 )
             }
         }

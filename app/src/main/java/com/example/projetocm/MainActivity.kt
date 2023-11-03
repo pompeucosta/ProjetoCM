@@ -179,6 +179,9 @@ class MainActivity : ComponentActivity() {
                                         navController.navigate("${Screen.SessionEnd.route}/$id")
                                         canNavigateBack = false
                                     },
+                                    onSessionCancel = {
+                                        navController.navigate(Screen.Home.route)
+                                    },
                                     locationClient = fusedLocationClient
                                 )
                                 topBarTitle = Screen.RunInProgress.title

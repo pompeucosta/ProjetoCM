@@ -68,7 +68,7 @@ class SessionInProgressViewModel(
         private set
 
     private var runId = -1
-    private var goalRun: RunPreset = RunPreset("",0,0,false)
+    private var goalRun: RunPreset = RunPreset("",0,0f,false)
     private val coordinates: MutableList<PathPoint> = mutableListOf() //lista de coordenadas da localizacao (trocar de string para o tipo certo)
 
     private var startTime: Long = 0
@@ -76,6 +76,9 @@ class SessionInProgressViewModel(
     private val today = LocalDate.now()
 
     private var timeWarned = false
+    private var twoWayWarned = false
+    private var distanceWarned = false
+
     private var hasPermission = false
     private var hasLocationPermission = false
     private var getCurrentLocation: () -> Unit = {}
@@ -85,7 +88,6 @@ class SessionInProgressViewModel(
     private var averageSpeed = 0.0
     private var topSpeed = 0.0
     private var calories = 0.0
-    private var distanceWarned = false
     private var timerStarted = false
     private var time: Long = 0
     private var elapsedTime: Long = 0
@@ -167,6 +169,24 @@ class SessionInProgressViewModel(
 
     fun updateDistance(){
         sessionInfoUI = sessionInfoUI.copy(sessionInfoDetails = sessionInfoUI.sessionInfoDetails.copy(distance = String.format("%.3f",(totalDistance/1000)) ))
+
+
+        if(hasPermission) {
+            val distance = sessionInfoUI.sessionInfoDetails.distance.toFloatOrNull() ?: 0f
+            if(!distanceWarned && distance >= goalRun.km) {
+                sendNotification("You have completed your distance goal!!")
+                distanceWarned = true
+            }
+
+            if(distance == 0f) return
+
+            if(!twoWayWarned && goalRun.twoWay && (distance / 2) >= goalRun.km) {
+                sendNotification("You have reached half of your distance goal!\nIt's time to go back.")
+                twoWayWarned = true
+            }
+        }
+
+        updateNotification()
     }
 
     fun updateAverageSpeed(){
@@ -229,7 +249,7 @@ class SessionInProgressViewModel(
         }
 
         if(hasPermission && !foregroundServiceLaunched && runId > 0){
-            setForegroundService("test")
+            setForegroundService("Running Session")
             Log.d("t","started service")
             foregroundServiceLaunched = true
         }
@@ -252,10 +272,10 @@ class SessionInProgressViewModel(
         }
     }
 
-    private fun reset() {
+    fun reset() {
         runId = -1
         timerStarted = false
-        if(sessionInfoUI.paused) {
+        if(!sessionInfoUI.paused) {
             timer.cancel()
         }
         sessionInfoUI = SessionInfoUI()
@@ -263,6 +283,19 @@ class SessionInProgressViewModel(
             stopForegroundService()
             foregroundServiceLaunched = false
         }
+
+        timeWarned = false
+        twoWayWarned = false
+        distanceWarned = false
+        coordinates.clear()
+        location = ""
+        timeOfLastLocationUpdate = 0L
+        totalDistance = 0.0
+        averageSpeed = 0.0
+        topSpeed = 0.0
+        calories = 0.0
+        time = 0L
+        elapsedTime = 0L
     }
 
     suspend fun finishSession(): Int {
@@ -320,12 +353,7 @@ class SessionInProgressViewModel(
 
     private fun updateNotification() {
         if(hasPermission && foregroundServiceLaunched) {
-            updateForegroundMessage(sessionInfoUI.sessionInfoDetails.time)
-
-            if(!distanceWarned && (sessionInfoUI.sessionInfoDetails.distance.toIntOrNull() ?: 0) >= goalRun.km) {
-                sendNotification("You have completed your distance goal!!")
-                distanceWarned = true
-            }
+            updateForegroundMessage("${sessionInfoUI.sessionInfoDetails.time}\n${sessionInfoUI.sessionInfoDetails.distance} km")
         }
     }
 }
