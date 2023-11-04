@@ -1,5 +1,6 @@
 package com.example.projetocm.ui.screens.session
 
+import android.annotation.SuppressLint
 import android.location.Location
 import android.os.CountDownTimer
 import android.os.SystemClock
@@ -21,6 +22,7 @@ import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.security.Permission
 import java.time.LocalDate
 import kotlin.math.abs
 
@@ -84,7 +86,11 @@ class SessionInProgressViewModel(
 
     private var hasPermission = false
     private var hasLocationPermission = false
+    private var hasStepCounterPermission = false
     private var getCurrentLocation: () -> Unit = {}
+    private lateinit var stepCounter: StepSensorManager
+    private var stepCounterStarted = false
+    private var startStepValue = 0f
     private val timeBetweenLocationUpdates = 5L //em segundos
     private var timeOfLastLocationUpdate = 0L
     private var totalDistance = 0.0
@@ -104,6 +110,7 @@ class SessionInProgressViewModel(
             updateAverageSpeed()
             updateTopSpeed()
             updateCalories()
+            updateSteps()
             requestPositionUpdate()
             Log.d("Coordinates","Distance: ${totalDistance} m, ${coordinates.size}")
             Log.d("Coordinates","${getStartingPosition()}, ${getLastPosition()}")
@@ -132,6 +139,10 @@ class SessionInProgressViewModel(
         hasLocationPermission = permission
     }
 
+    fun updateStepCounterPermission(permission: Boolean) {
+        hasStepCounterPermission = permission
+    }
+
     fun hasLocationPermission(): Boolean{
         return hasLocationPermission
     }
@@ -140,8 +151,16 @@ class SessionInProgressViewModel(
         return hasPermission
     }
 
+    fun hasStepCounterPermission(): Boolean{
+        return hasStepCounterPermission
+    }
+
     fun setLocationGetter(getLocation:() -> Unit){
         getCurrentLocation = getLocation
+    }
+
+    fun setStepCounter(stepcounter: StepSensorManager){
+        stepCounter = stepcounter
     }
 
     fun addPathPoint(latlng: LatLng){
@@ -157,14 +176,7 @@ class SessionInProgressViewModel(
             )
             totalDistance += results[0]
 
-            var sectionSpeed = 0.0
-            val sectionTime = SystemClock.elapsedRealtime() - coordinates.last().getTime()
             if(results[0] > 0){
-                sectionSpeed = (results[0].toDouble()/1000)/(sectionTime.toDouble()/3600)
-                if(sectionSpeed > topSpeed){
-                    topSpeed = sectionSpeed
-                }
-
                 coordinates.add(PathPoint(latlng," ",SystemClock.elapsedRealtime()))
             }
 
@@ -181,14 +193,14 @@ class SessionInProgressViewModel(
 
         if(hasPermission) {
             val distance = sessionInfoUI.sessionInfoDetails.distance.toFloatOrNull() ?: 0f
-            if(!distanceWarned && distance >= goalRun.km) {
+            if(!distanceWarned && distance/1000 >= goalRun.km) {
                 sendNotification("You have completed your distance goal!!")
                 distanceWarned = true
             }
 
             if(distance == 0f) return
 
-            if(!twoWayWarned && goalRun.twoWay && (distance / 2) >= goalRun.km) {
+            if(!twoWayWarned && goalRun.twoWay && (distance / 2000) >= goalRun.km) {
                 sendNotification("You have reached half of your distance goal!\nIt's time to go back.")
                 twoWayWarned = true
             }
@@ -205,6 +217,23 @@ class SessionInProgressViewModel(
     }
 
     fun updateTopSpeed(){
+        if(coordinates.size > 1){
+            var results : FloatArray = floatArrayOf(0f)
+            Location.distanceBetween(
+                coordinates.last().getLatLng().latitude,
+                coordinates.last().getLatLng().longitude,
+                coordinates[coordinates.size-2].getLatLng().latitude,
+                coordinates[coordinates.size-2].getLatLng().longitude,
+                results
+            )
+            if(results[0] > 0) {
+                val sectionTime = coordinates.last().getTime() - coordinates[coordinates.size - 2].getTime()
+                val sectionSpeed = (results[0].toDouble() / 1000) / (sectionTime.toDouble() / 3600)
+                if (sectionSpeed > topSpeed) {
+                    topSpeed = sectionSpeed
+                }
+            }
+        }
         sessionInfoUI = sessionInfoUI.copy(sessionInfoDetails = sessionInfoUI.sessionInfoDetails.copy(topSpeed = String.format("%.2f",topSpeed) ))
     }
 
@@ -214,6 +243,15 @@ class SessionInProgressViewModel(
             calories = elapsedTime * met * 3.5 * 77 / (200 * 60)
         }
         sessionInfoUI = sessionInfoUI.copy(sessionInfoDetails = sessionInfoUI.sessionInfoDetails.copy(calories = String.format("%.3f",calories/1000) ))
+    }
+
+    fun updateSteps(){
+        if(!stepCounterStarted && stepCounter.getCurrentSteps() > 0){
+            startStepValue = stepCounter.getCurrentSteps()
+            stepCounterStarted = true
+        }
+        Log.d("Steps", "start: $startStepValue, current: ${stepCounter.getCurrentSteps()}")
+        sessionInfoUI = sessionInfoUI.copy(sessionInfoDetails = sessionInfoUI.sessionInfoDetails.copy(stepsTaken = String.format("%.0f",stepCounter.getCurrentSteps() - startStepValue) ))
     }
 
     fun getCoordinates(): MutableList<PathPoint> {
@@ -304,6 +342,8 @@ class SessionInProgressViewModel(
         calories = 0.0
         time = 0L
         elapsedTime = 0L
+        stepCounterStarted = false
+        startStepValue = 0f
     }
 
     suspend fun finishSession(): Int {

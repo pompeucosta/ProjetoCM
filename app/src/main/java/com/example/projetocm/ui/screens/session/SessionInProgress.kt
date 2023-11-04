@@ -1,7 +1,10 @@
 package com.example.projetocm.ui.screens.session
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
+import android.hardware.Sensor
+import android.hardware.SensorManager
 import android.location.Location
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -101,6 +104,7 @@ fun SessionInProgress(
             viewModel.updateLocationPermission(true)
         }
 
+
         val notificationPermissionLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission(),
             onResult = {isGranted ->
@@ -139,6 +143,46 @@ fun SessionInProgress(
             viewModel.updatePermission(true)
         }
 
+        val stepCounterPermissionLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = {isGranted ->
+                viewModel.updateStepCounterPermission(isGranted)
+
+            }
+        )
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && viewModel.hasStepCounterPermission()) {
+            val context = LocalContext.current
+
+            LaunchedEffect(stepCounterPermissionLauncher) {
+                when(PackageManager.PERMISSION_GRANTED) {
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.ACTIVITY_RECOGNITION
+                    ) -> {
+                        viewModel.updateStepCounterPermission(true)
+                    }
+                    else -> {
+                        stepCounterPermissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
+                    }
+                }
+            }
+        }
+        else {
+            viewModel.updateStepCounterPermission(true)
+        }
+
+        var stepSensor = StepSensorManager()
+        if(viewModel.hasStepCounterPermission()){
+            var context = LocalContext.current
+            val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            val stepCounterSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
+            stepCounterSensor?.let {
+                sensorManager.registerListener(stepSensor, it, SensorManager.SENSOR_DELAY_FASTEST)
+            }
+            viewModel.setStepCounter(stepSensor)
+
+        }
 
         viewModel.startTimer()
 
@@ -147,6 +191,9 @@ fun SessionInProgress(
             modifier = Modifier
                 .weight(1f)
         ) {
+
+
+
             var uiSettings by remember { mutableStateOf(MapUiSettings(
                 compassEnabled = false,
                 zoomControlsEnabled = false
