@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -22,6 +23,7 @@ import com.example.projetocm.R
 import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.screens.session.SessionInfo
 import com.example.projetocm.ui.theme.ProjetoCMTheme
+import com.example.projetocm.ui.utils.BitmapFromVector
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
@@ -78,7 +80,8 @@ fun Home(
                     if(viewModel.getStartingPosition().latitude != 0.0 && viewModel.getStartingPosition().longitude != 0.0 ){
                         Marker(
                             state= MarkerState(viewModel.getStartingPosition()),
-                            title= "Start"
+                            title= "Start",
+                            icon= BitmapFromVector(LocalContext.current,R.drawable.baseline_flag_24)
                         )
                     }
 
@@ -86,7 +89,8 @@ fun Home(
                     if(viewModel.getLastPosition().latitude != 0.0 && viewModel.getLastPosition().longitude != 0.0 ){
                         Marker(
                             state= MarkerState(viewModel.getLastPosition()),
-                            title= "Start"
+                            title= "Start",
+                            icon= BitmapFromVector(LocalContext.current,R.drawable.baseline_directions_run_24)
                         )
                     }
 

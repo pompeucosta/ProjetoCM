@@ -13,9 +13,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.projetocm.R
 import com.example.projetocm.ui.AppViewModelProvider
+import com.example.projetocm.ui.utils.BitmapFromVector
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -67,7 +70,8 @@ fun SessionEndDetails(
                 if(viewModel.getStartingPosition().latitude != 0.0 && viewModel.getStartingPosition().longitude != 0.0 ){
                     Marker(
                         state= MarkerState(viewModel.getStartingPosition()),
-                        title= "Start"
+                        title= "Start",
+                        icon= BitmapFromVector(LocalContext.current, R.drawable.baseline_flag_24)
                     )
                 }
 
@@ -75,7 +79,8 @@ fun SessionEndDetails(
                 if(viewModel.getLastPosition().latitude != 0.0 && viewModel.getLastPosition().longitude != 0.0 ){
                     Marker(
                         state= MarkerState(viewModel.getLastPosition()),
-                        title= "Start"
+                        title= "Start",
+                        icon= BitmapFromVector(LocalContext.current,R.drawable.baseline_directions_run_24)
                     )
                 }
 

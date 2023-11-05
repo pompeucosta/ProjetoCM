@@ -113,9 +113,6 @@ class SessionInProgressViewModel(
             updateCalories()
             updateSteps()
             requestPositionUpdate()
-            Log.d("Coordinates","Distance: ${totalDistance} m, ${coordinates.size}")
-            Log.d("Coordinates","${getStartingPosition()}, ${getLastPosition()}")
-            Log.d("Converter","${coordinates}")
 
         }
 
@@ -237,7 +234,7 @@ class SessionInProgressViewModel(
             if(results[0] > 0) {
                 val sectionTime = coordinates.last().getTime() - coordinates[coordinates.size - 2].getTime()
                 val sectionSpeed = (results[0].toDouble() / 1000) / (sectionTime.toDouble() / 3600000)
-                if (sectionSpeed > topSpeed) {
+                if (sectionSpeed > topSpeed && sectionSpeed - topSpeed < 20) {
                     topSpeed = sectionSpeed
                 }
             }

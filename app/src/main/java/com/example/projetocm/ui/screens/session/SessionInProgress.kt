@@ -33,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,6 +43,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projetocm.R
 import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.theme.ProjetoCMTheme
+import com.example.projetocm.ui.utils.BitmapFromVector
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -232,12 +234,15 @@ fun SessionInProgress(
                 Polyline(points = viewModel.getPoints())
                 Marker(
                     state= MarkerState(viewModel.getStartingPosition()),
-                    title= "Start"
+                    title= "Start",
+                    icon= BitmapFromVector(LocalContext.current,R.drawable.baseline_flag_24)
                 )
 
                 Marker(
                     state= MarkerState(viewModel.getLastPosition()),
-                    title= "Current position"
+                    title= "Current position",
+                    icon= BitmapFromVector(LocalContext.current,R.drawable.baseline_directions_run_24),
+                    zIndex = 3f
                 )
 
             }
