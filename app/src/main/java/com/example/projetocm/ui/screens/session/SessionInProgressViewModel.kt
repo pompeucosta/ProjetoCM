@@ -89,6 +89,7 @@ class SessionInProgressViewModel(
     private var hasStepCounterPermission = false
     private var getCurrentLocation: () -> Unit = {}
     private lateinit var stepCounter: StepSensorManager
+    private var isStepCounterListening = false
     private var stepCounterStarted = false
     private var startStepValue = 0f
     private val timeBetweenLocationUpdates = 5L //em segundos
@@ -163,6 +164,13 @@ class SessionInProgressViewModel(
         stepCounter = stepcounter
     }
 
+    fun updateStepCounterListening(value: Boolean) {
+        isStepCounterListening = value
+    }
+    fun isStepCounterListening(): Boolean{
+        return isStepCounterListening
+    }
+
     fun addPathPoint(latlng: LatLng){
         if(coordinates.size > 0){
 
@@ -228,7 +236,7 @@ class SessionInProgressViewModel(
             )
             if(results[0] > 0) {
                 val sectionTime = coordinates.last().getTime() - coordinates[coordinates.size - 2].getTime()
-                val sectionSpeed = (results[0].toDouble() / 1000) / (sectionTime.toDouble() / 3600)
+                val sectionSpeed = (results[0].toDouble() / 1000) / (sectionTime.toDouble() / 3600000)
                 if (sectionSpeed > topSpeed) {
                     topSpeed = sectionSpeed
                 }
@@ -246,11 +254,12 @@ class SessionInProgressViewModel(
     }
 
     fun updateSteps(){
-        if(!stepCounterStarted && stepCounter.getCurrentSteps() > 0){
-            startStepValue = stepCounter.getCurrentSteps()
-            stepCounterStarted = true
+        if(!stepCounterStarted && isStepCounterListening){
+            if(stepCounter.getCurrentSteps() > 0){
+                startStepValue = stepCounter.getCurrentSteps()
+                stepCounterStarted = true
+            }
         }
-        Log.d("Steps", "start: $startStepValue, current: ${stepCounter.getCurrentSteps()}")
         sessionInfoUI = sessionInfoUI.copy(sessionInfoDetails = sessionInfoUI.sessionInfoDetails.copy(stepsTaken = String.format("%.0f",stepCounter.getCurrentSteps() - startStepValue) ))
     }
 

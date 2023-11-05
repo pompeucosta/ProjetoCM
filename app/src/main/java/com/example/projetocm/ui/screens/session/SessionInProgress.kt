@@ -173,14 +173,15 @@ fun SessionInProgress(
         }
 
         var stepSensor = StepSensorManager()
-        if(viewModel.hasStepCounterPermission()){
+        if(viewModel.hasStepCounterPermission() and !viewModel.isStepCounterListening()){
             var context = LocalContext.current
             val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
             val stepCounterSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
             stepCounterSensor?.let {
                 sensorManager.registerListener(stepSensor, it, SensorManager.SENSOR_DELAY_FASTEST)
+                viewModel.updateStepCounterListening(true)
+                viewModel.setStepCounter(stepSensor)
             }
-            viewModel.setStepCounter(stepSensor)
 
         }
 
