@@ -111,6 +111,31 @@ fun SessionInProgress(
             viewModel.updateLocationPermission(true)
         }
 
+        val bgLocationPermissionLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = {isGranted ->
+                viewModel.updateLocationPermission(isGranted)
+            }
+        )
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && viewModel.hasLocationPermission()) {
+            val context = LocalContext.current
+
+            LaunchedEffect(locationPermissionLauncher) {
+                when(PackageManager.PERMISSION_GRANTED) {
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    ) -> {
+                    }
+                    else -> {
+                        bgLocationPermissionLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                    }
+                }
+            }
+        }
+
+
 
         val notificationPermissionLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission(),
@@ -195,11 +220,13 @@ fun SessionInProgress(
         viewModel.startTimer()
         viewModel.startTracking()
         if(viewModel.hasLocationPermission() && !viewModel.isReceiverRegistered()){
+            val context = LocalContext.current
             val filter = IntentFilter("com.example.projetocm.LocationBroadcast")
             val locationReceiver = LocationReceiver()
             locationReceiver.setReceiveLocation(viewModel::updatePosition)
-            registerReceiver(LocalContext.current,locationReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            registerReceiver(context,locationReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
             viewModel.setIsReceiverRegistered(true)
+            viewModel.setUnregisterReceiver{context.unregisterReceiver(locationReceiver)}
         }
 
         Column(

@@ -99,6 +99,7 @@ class SessionInProgressViewModel(
     private var hasStepCounterPermission = false
     private var getCurrentLocation: () -> Unit = {}
     private var isReceiverActive = false
+    private var unregisterLocationReceiver: () -> Unit = {}
     private lateinit var stepCounter: StepSensorManager
     private var isStepCounterListening = false
     private var stepCounterStarted = false
@@ -176,6 +177,9 @@ class SessionInProgressViewModel(
         return isStepCounterListening
     }
 
+    fun setUnregisterReceiver(value: () -> Unit){
+        unregisterLocationReceiver = value
+    }
     fun isReceiverRegistered(): Boolean{
         return isReceiverActive
     }
@@ -184,6 +188,7 @@ class SessionInProgressViewModel(
         isReceiverActive = value
     }
     fun updatePosition(latitude: Double, longitude: Double, time: Long){
+        Log.d("loc","${latitude}, ${longitude}, ${time}")
         addPathPoint(LatLng(latitude, longitude),time)
     }
 
@@ -367,6 +372,11 @@ class SessionInProgressViewModel(
         if(locationServiceLaunched) {
             stopLocationService()
             locationServiceLaunched = false
+        }
+
+        if(isReceiverActive) {
+            unregisterLocationReceiver()
+            isReceiverActive = false
         }
 
         timeWarned = false
