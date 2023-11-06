@@ -1,6 +1,11 @@
 package com.example.projetocm.ui.screens.session
 
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.ServiceConnection
 import android.location.Location
 import android.os.CountDownTimer
 import android.os.SystemClock
@@ -8,6 +13,8 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED
+import androidx.core.content.ContextCompat.registerReceiver
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,6 +25,7 @@ import com.example.projetocm.data.RunPreset
 import com.example.projetocm.data.SessionInfo
 import com.example.projetocm.data.repositories.HistorySessionsRepository
 import com.example.projetocm.data.repositories.RunPresetsRepository
+import com.example.projetocm.services.LocationService
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -66,6 +74,8 @@ class SessionInProgressViewModel(
     private val stopForegroundService: () -> Unit,
     private val updateForegroundMessage: (String) -> Unit,
     private val sendNotification: (String) -> Unit,
+    private val setLocationService: () -> Unit,
+    private val stopLocationService: () -> Unit,
     private val historySessionsRepository: HistorySessionsRepository,
     private val runsRepository: RunPresetsRepository
 ) : ViewModel() {
@@ -88,6 +98,7 @@ class SessionInProgressViewModel(
     private var hasLocationPermission = false
     private var hasStepCounterPermission = false
     private var getCurrentLocation: () -> Unit = {}
+    private var isReceiverActive = false
     private lateinit var stepCounter: StepSensorManager
     private var isStepCounterListening = false
     private var stepCounterStarted = false
@@ -102,6 +113,7 @@ class SessionInProgressViewModel(
     private var time: Long = 0
     private var elapsedTime: Long = 0
     private var foregroundServiceLaunched = false
+    private var locationServiceLaunched = false
 
 
     private val timer: CountDownTimer = object : CountDownTimer(Long.MAX_VALUE,1000) {
@@ -153,10 +165,6 @@ class SessionInProgressViewModel(
         return hasStepCounterPermission
     }
 
-    fun setLocationGetter(getLocation:() -> Unit){
-        getCurrentLocation = getLocation
-    }
-
     fun setStepCounter(stepcounter: StepSensorManager){
         stepCounter = stepcounter
     }
@@ -168,7 +176,18 @@ class SessionInProgressViewModel(
         return isStepCounterListening
     }
 
-    fun addPathPoint(latlng: LatLng){
+    fun isReceiverRegistered(): Boolean{
+        return isReceiverActive
+    }
+
+    fun setIsReceiverRegistered(value: Boolean){
+        isReceiverActive = value
+    }
+    fun updatePosition(latitude: Double, longitude: Double, time: Long){
+        addPathPoint(LatLng(latitude, longitude),time)
+    }
+
+    private fun addPathPoint(latlng: LatLng, time: Long = SystemClock.elapsedRealtime()){
         if(coordinates.size > 0){
 
             var results : FloatArray = floatArrayOf(0f)
@@ -182,7 +201,7 @@ class SessionInProgressViewModel(
             totalDistance += results[0]
 
             if(results[0] > 0){
-                coordinates.add(PathPoint(latlng," ",SystemClock.elapsedRealtime()))
+                coordinates.add(PathPoint(latlng," ",time))
             }
 
 
@@ -234,7 +253,7 @@ class SessionInProgressViewModel(
             if(results[0] > 0) {
                 val sectionTime = coordinates.last().getTime() - coordinates[coordinates.size - 2].getTime()
                 val sectionSpeed = (results[0].toDouble() / 1000) / (sectionTime.toDouble() / 3600000)
-                if (sectionSpeed > topSpeed && sectionSpeed - topSpeed < 20) {
+                if (sectionSpeed > topSpeed) {
                     topSpeed = sectionSpeed
                 }
             }
@@ -268,7 +287,7 @@ class SessionInProgressViewModel(
         if(coordinates.size > 0){
             return coordinates.first().getLatLng()
         }
-        return LatLng(0.0,0.0)
+        return LatLng(40.63319811102272, -8.65936701396476)
     }
 
 
@@ -282,7 +301,7 @@ class SessionInProgressViewModel(
         if(coordinates.size > 0){
             return coordinates.last().getLatLng()
         }
-        return LatLng(0.0,0.0)
+        return LatLng(40.63319811102272, -8.65936701396476)
     }
 
     fun requestPositionUpdate(){
@@ -307,6 +326,15 @@ class SessionInProgressViewModel(
         }
 
 
+    }
+
+    fun startTracking() {
+        if(hasLocationPermission && !locationServiceLaunched && runId > 0){
+            setLocationService()
+            locationServiceLaunched = true
+
+
+        }
     }
 
     fun changeRunId(_runId: Int) {
@@ -334,6 +362,11 @@ class SessionInProgressViewModel(
         if(foregroundServiceLaunched) {
             stopForegroundService()
             foregroundServiceLaunched = false
+        }
+
+        if(locationServiceLaunched) {
+            stopLocationService()
+            locationServiceLaunched = false
         }
 
         timeWarned = false
@@ -408,6 +441,36 @@ class SessionInProgressViewModel(
     private fun updateNotification() {
         if(hasPermission && foregroundServiceLaunched) {
             updateForegroundMessage("${sessionInfoUI.sessionInfoDetails.time}\n${sessionInfoUI.sessionInfoDetails.distance} km")
+        }
+    }
+}
+
+
+class LocationReceiver : BroadcastReceiver() {
+
+    var latitude = 0.0
+    var longitude = 0.0
+    var time = 0L
+
+    var onReceiveLocation: (Double,Double,Long) -> Unit = {lat: Double, lon: Double, time: Long -> }
+
+    fun setReceiveLocation(receiveLocation: (Double,Double,Long) -> Unit){
+        onReceiveLocation = receiveLocation
+    }
+    override fun onReceive(context: Context?, intent: Intent?) {
+        if (intent?.action == "com.example.projetocm.LocationBroadcast") {
+            val lat = intent.getDoubleExtra("Latitude",0.0)
+            val lon = intent.getDoubleExtra("Longitude",0.0)
+            val locTime = intent.getLongExtra("Time",0L)
+            if(lat != 0.0 && lon != 0.0 && locTime != 0L){
+
+                latitude = lat
+                longitude = lon
+                time = locTime
+
+                onReceiveLocation(latitude,longitude,time)
+            }
+
         }
     }
 }

@@ -1,8 +1,12 @@
 package com.example.projetocm
 
 import android.annotation.SuppressLint
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.os.Bundle
+import android.os.IBinder
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -45,6 +50,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.findNavController
 import androidx.navigation.navArgument
+import com.example.projetocm.services.LocationService
 import com.example.projetocm.services.RunningService
 import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.screens.history.History
@@ -80,11 +86,17 @@ class MainActivity : ComponentActivity() {
     private lateinit var navController: NavHostController
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
+    private var locationService: LocationService? = null
+    private var locationServiceBound = false
+
+
+
     @SuppressLint("MissingPermission")
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
         setContent {
             ProjetoCMTheme {
                 val items = listOf(

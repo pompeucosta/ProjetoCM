@@ -2,11 +2,15 @@ package com.example.projetocm.ui.screens.session
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.location.Location
 import android.os.Build
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
@@ -33,14 +37,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.registerReceiver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projetocm.R
+import com.example.projetocm.services.LocationService
 import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.theme.ProjetoCMTheme
 import com.example.projetocm.ui.utils.BitmapFromVector
@@ -188,6 +193,14 @@ fun SessionInProgress(
         }
 
         viewModel.startTimer()
+        viewModel.startTracking()
+        if(viewModel.hasLocationPermission() && !viewModel.isReceiverRegistered()){
+            val filter = IntentFilter("com.example.projetocm.LocationBroadcast")
+            val locationReceiver = LocationReceiver()
+            locationReceiver.setReceiveLocation(viewModel::updatePosition)
+            registerReceiver(LocalContext.current,locationReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            viewModel.setIsReceiverRegistered(true)
+        }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -204,25 +217,15 @@ fun SessionInProgress(
             var mapProperties by remember {mutableStateOf(MapProperties(mapType = MapType.NORMAL))}
 
             val baseZoom = 16f
-            var currentPosition = LatLng(40.63319811102272, -8.65936701396476)
+            var defaultPosition = LatLng(40.63319811102272, -8.65936701396476)
             val cameraPositionState = rememberCameraPositionState {
-                position = CameraPosition.fromLatLngZoom(currentPosition, baseZoom)
+                position = CameraPosition.fromLatLngZoom(defaultPosition, baseZoom)
             }
-            if(viewModel.hasLocationPermission()){
-                locationClient.lastLocation
-                    .addOnSuccessListener { location : Location? ->
-                        if(location != null){
-                            currentPosition = LatLng(location.latitude,location.longitude)
-                            viewModel.addPathPoint(currentPosition)
-                        }else{
-                            currentPosition = LatLng(2.2,2.2)
-
-                        }
-                        cameraPositionState.position = CameraPosition.fromLatLngZoom(viewModel.getLastPosition(), baseZoom)
-                    }
-                viewModel.setLocationGetter{ locationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY,null) }
-
+            if(viewModel.isReceiverRegistered()){
+                cameraPositionState.position=CameraPosition.fromLatLngZoom(viewModel.getLastPosition(), baseZoom)
             }
+
+
 
             GoogleMap(
                 properties = mapProperties,

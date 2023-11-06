@@ -14,6 +14,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projetocm.data.AppContainer
 import com.example.projetocm.data.AppDataContainer
+import com.example.projetocm.services.LocationService
 import com.example.projetocm.services.RunningService
 import com.example.projetocm.ui.AppViewModelProvider
 import com.example.projetocm.ui.mainApplication
@@ -25,6 +26,7 @@ import org.koin.ksp.generated.defaultModule
 
 object NotificationIDs {
     const val Running_Service_ID = 1
+    const val Location_Service_ID = 3
 }
 
 class MainApplication: Application() {
@@ -55,6 +57,18 @@ class MainApplication: Application() {
             },
             updateForegroundMessage = {updateRunningServiceMessage(it)},
             sendNotification = {sendNotification(it)},
+            setLocationService= {
+                Intent(this,LocationService::class.java).also {
+                    it.action = LocationService.Actions.Start.toString()
+                    startService(it)
+                }
+            },
+            stopLocationService={
+                Intent(this,LocationService::class.java).also {
+                    it.action = LocationService.Actions.Stop.toString()
+                    startService(it)
+                }
+            },
             container.sessionsRepository,
             container.presetsRepository
         )
@@ -77,11 +91,18 @@ class MainApplication: Application() {
             NotificationManager.IMPORTANCE_LOW
         )
 
+        val locationServiceChannel = NotificationChannel(
+            "location_foreground_channel",
+            "RunRoute Notification for location foreground service",
+            NotificationManager.IMPORTANCE_DEFAULT
+        )
+
 
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
         notificationManager.createNotificationChannel(serviceChannel)
+        notificationManager.createNotificationChannel(locationServiceChannel)
     }
 
     private fun sendNotification(message: String) {
